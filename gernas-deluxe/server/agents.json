@@ -1,0 +1,217 @@
+[
+  {
+    "id": "agent-001",
+    "name": "SMB Onboarding Agent",
+    "segment": "Merchant Services",
+    "segmentKey": "merchant",
+    "category": "Onboarding",
+    "description": "Automates the full SMB merchant onboarding lifecycle — from application submission to first live transaction — cutting average onboarding time from days to hours.",
+    "capabilities": [
+      "KYB (Know Your Business) verification against government and commercial databases",
+      "Risk scoring across 12 signals including credit, fraud history, and industry risk",
+      "Payment terminal provisioning and configuration",
+      "Document collection, validation, and secure storage",
+      "Banking account verification via micro-deposit"
+    ],
+    "tools": ["kyb-verify", "crm-write", "email-send", "terminal-config"],
+    "solves": [
+      "KYB & identity verification",
+      "Risk scoring & assessment",
+      "Terminal provisioning",
+      "Account activation",
+      "Welcome & training delivery"
+    ],
+    "doesNotSolve": [
+      "Merchant-facing status portal",
+      "Micro-deposit confirmation automation"
+    ],
+    "trigger": "webhook/new-application",
+    "model": "claude-sonnet-4-6",
+    "status": "running",
+    "version": "2.1.4",
+    "teams": 3,
+    "deployments": 47,
+    "successRate": 96.2,
+    "tasksToday": 47,
+    "savingsDay": 18400
+  },
+  {
+    "id": "agent-002",
+    "name": "Churn Prevention Agent",
+    "segment": "Print",
+    "segmentKey": "print",
+    "category": "Revenue",
+    "description": "Continuously monitors print customer order patterns to detect early churn signals and automatically trigger retention campaigns before customers leave.",
+    "capabilities": [
+      "Order pattern monitoring and trend analysis",
+      "Churn risk scoring based on purchase frequency and recency",
+      "Automated retention email campaign execution",
+      "Sales team escalation for high-value at-risk accounts",
+      "Win-back sequences for recently churned customers"
+    ],
+    "tools": ["crm-read", "order-history", "email-send", "sales-alert"],
+    "solves": [
+      "Early churn signal detection (60+ days)",
+      "Email retention campaigns",
+      "Sales escalation alerts",
+      "Order gap monitoring"
+    ],
+    "doesNotSolve": [
+      "SMS / phone channel outreach",
+      "Post-churn win-back",
+      "Context briefs for account managers"
+    ],
+    "trigger": "schedule/hourly-scan",
+    "model": "claude-sonnet-4-6",
+    "status": "running",
+    "version": "1.8.2",
+    "teams": 2,
+    "deployments": 31,
+    "successRate": 88.7,
+    "tasksToday": 31,
+    "savingsDay": 12200
+  },
+  {
+    "id": "agent-003",
+    "name": "Invoice Reconciliation Agent",
+    "segment": "B2B Payments",
+    "segmentKey": "b2b",
+    "category": "Operations",
+    "description": "Eliminates manual invoice-to-payment matching across multiple ERP systems, auto-posting matched transactions to the GL and flagging exceptions for human review.",
+    "capabilities": [
+      "Invoice-to-payment matching across multiple ERP systems",
+      "Exception flagging with suggested resolution for unmatched items",
+      "General Ledger (GL) journal entry write-back",
+      "Native integration with SAP, Oracle, and NetSuite",
+      "Real-time reconciliation with audit trail"
+    ],
+    "tools": ["erp-read", "payment-match", "gl-write", "exception-flag"],
+    "solves": [
+      "Invoice-to-payment auto-matching",
+      "Exception detection & flagging",
+      "GL journal entry automation",
+      "Multi-ERP integration"
+    ],
+    "doesNotSolve": [
+      "Vendor dispute resolution",
+      "Month-end close orchestration",
+      "Complex multi-line GL entries"
+    ],
+    "trigger": "schedule/realtime",
+    "model": "claude-sonnet-4-6",
+    "status": "idle",
+    "version": "3.0.1",
+    "teams": 4,
+    "deployments": 124,
+    "successRate": 94.1,
+    "tasksToday": 124,
+    "savingsDay": 31800
+  },
+  {
+    "id": "agent-004",
+    "name": "Data Enrichment Agent",
+    "segment": "Data Solutions",
+    "segmentKey": "data",
+    "category": "Data",
+    "description": "Continuously enriches SMB customer profiles with firmographic, revenue, and payment behavior signals to improve segmentation, propensity scoring, and upsell targeting.",
+    "capabilities": [
+      "SMB revenue and firmographic data enrichment from external sources",
+      "Payment behavior scoring and trend analysis",
+      "Continuous customer profile refresh and de-duplication",
+      "Propensity model feature preparation and scoring",
+      "Segmentation updates pushed to downstream CRM and marketing systems"
+    ],
+    "tools": ["data-fetch", "profile-update", "signal-score", "warehouse-write"],
+    "solves": [
+      "Revenue & firmographic enrichment",
+      "Payment behavior scoring",
+      "Continuous profile refresh",
+      "Multi-source data aggregation"
+    ],
+    "doesNotSolve": [
+      "Seasonal payment pattern modeling",
+      "Propensity model pipeline",
+      "Data quality monitoring"
+    ],
+    "trigger": "schedule/continuous",
+    "model": "claude-sonnet-4-6",
+    "status": "running",
+    "version": "4.2.0",
+    "teams": 5,
+    "deployments": 892,
+    "successRate": 99.1,
+    "tasksToday": 892,
+    "savingsDay": 44600
+  },
+  {
+    "id": "agent-005",
+    "name": "Fraud Detection Agent",
+    "segment": "Merchant Services",
+    "segmentKey": "merchant",
+    "category": "Risk & Compliance",
+    "description": "Provides sub-second real-time fraud detection across the merchant transaction stream, automatically holding suspicious accounts and generating compliance reports.",
+    "capabilities": [
+      "Sub-second transaction anomaly detection with 99.8% accuracy",
+      "Automated account hold for high-confidence fraud signals",
+      "Compliance alerts and regulatory notification workflows",
+      "Suspicious Activity Report (SAR) generation for BSA/AML compliance",
+      "Merchant risk profile updates based on transaction history"
+    ],
+    "tools": ["txn-stream", "anomaly-detect", "hold-trigger", "compliance-alert"],
+    "solves": [
+      "Real-time transaction anomaly detection",
+      "Auto account hold on confirmed fraud",
+      "Compliance alert generation",
+      "Transaction stream monitoring"
+    ],
+    "doesNotSolve": [
+      "SAR auto-filing to FinCEN",
+      "Cross-merchant fraud ring detection",
+      "Merchant education campaigns"
+    ],
+    "trigger": "event/transaction-stream",
+    "model": "claude-sonnet-4-6",
+    "status": "running",
+    "version": "5.1.0",
+    "teams": 6,
+    "deployments": 3201,
+    "successRate": 99.8,
+    "tasksToday": 3201,
+    "savingsDay": 88000
+  },
+  {
+    "id": "agent-006",
+    "name": "Upsell Intelligence Agent",
+    "segment": "Print",
+    "segmentKey": "print",
+    "category": "Revenue",
+    "description": "Identifies print customers most likely to expand into payments products by scoring propensity, prioritizing leads, and routing them to the right sales team with context-rich proposals.",
+    "capabilities": [
+      "Print-to-payments migration propensity scoring",
+      "Lead prioritization and queue management for sales teams",
+      "Automated proposal generation based on customer profile",
+      "Intelligent sales team routing by territory and product expertise"
+    ],
+    "tools": ["crm-read", "propensity-score", "proposal-gen", "sales-route"],
+    "solves": [
+      "Propensity scoring for print→payments migration",
+      "Lead prioritization",
+      "Proposal generation",
+      "Sales team routing"
+    ],
+    "doesNotSolve": [
+      "Outbound email campaigns",
+      "ROI attribution per lead",
+      "A/B testing of proposals"
+    ],
+    "trigger": "schedule/daily",
+    "model": "claude-sonnet-4-6",
+    "status": "idle",
+    "version": "1.2.0",
+    "teams": 1,
+    "deployments": 18,
+    "successRate": 72.4,
+    "tasksToday": 18,
+    "savingsDay": 9600
+  }
+]

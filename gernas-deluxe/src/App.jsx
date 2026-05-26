@@ -8,7 +8,6 @@ import B2BReconciliation   from './pages/B2BReconciliation'
 import DataEnrichment      from './pages/DataEnrichment'
 import GovernanceRegistry  from './pages/GovernanceRegistry'
 import ExecutiveDeck       from './pages/ExecutiveDeck'
-import AgentCatalog        from './pages/AgentCatalog'
 import AgentBuilder        from './pages/AgentBuilder'
 import AgentAnalyst        from './pages/AgentAnalyst'
 import ImagineStudio       from './pages/ImagineStudio'
@@ -30,7 +29,6 @@ export default function App() {
           <Route path="common-agents"  element={<CommonAgents />} />
           <Route path="governance"     element={<GovernanceRegistry />} />
           <Route path="executive"      element={<ExecutiveDeck />} />
-          <Route path="catalog"        element={<AgentCatalog />} />
           <Route path="builder"        element={<AgentBuilder />} />
           <Route path="studio"         element={<ImagineStudio />} />
           <Route path="agent-pool"     element={<AgentPool />} />

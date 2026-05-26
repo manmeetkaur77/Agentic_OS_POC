@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, GitBranch, CreditCard, Printer,
-  FileText, Database, Shield, TrendingUp, BookOpen, Hammer,
+  FileText, Database, Shield, TrendingUp, Hammer,
   Sparkles, Layers, Share2
 } from 'lucide-react'
 
@@ -13,7 +13,6 @@ const navItems = [
   { divider: true, label: 'OPERATE' },
   { path: '/orchestration',label: 'Agent Orchestration', icon: GitBranch,       badge: '6 active' },
   { divider: true, label: 'BUILD' },
-  { path: '/catalog',      label: 'Agent Catalog',       icon: BookOpen,        badge: '6 agents' },
   { path: '/agent-analyst',label: 'Agent Analyst',       icon: Hammer,          badge: 'new', accent: '#F59E0B' },
   { divider: true, label: 'SHARED AGENTS' },
   { path: '/common-agents', label: 'Common Agents',          icon: Share2,   color: '#7C3AED', badge: '4 agents' },

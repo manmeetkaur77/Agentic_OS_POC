@@ -25,6 +25,7 @@ const useStore = create((set) => ({
   toasts: [],
   builtAgents: [],
   confluencePages: [],   // pages sent from Imagination Studio → Agent Analyst
+  deployedAgents: [],    // agents submitted via Agent Analyst phase journey
 
   // Imagination Studio session — persists during SPA navigation, clears on refresh
   novaSession: null,
@@ -42,6 +43,13 @@ const useStore = create((set) => ({
 
   addConfluencePage: (page) => set((s) => ({
     confluencePages: [page, ...s.confluencePages],
+  })),
+
+  addDeployedAgent: (agent) => set((s) => ({
+    deployedAgents: [...s.deployedAgents, { ...agent, id: agent.id || Date.now() }],
+  })),
+  updateDeployedAgentStatus: (id, status) => set((s) => ({
+    deployedAgents: s.deployedAgents.map(a => a.id === id ? { ...a, status } : a),
   })),
 
   setSelectedMerchant: (m) => set({ selectedMerchant: m }),

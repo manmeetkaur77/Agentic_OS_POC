@@ -12,7 +12,6 @@ const breadcrumbs = {
   '/common-agents': ['DLX_AGENTIC_OS', 'Shared Agents', 'Common Agents'],
   '/governance':   ['DLX_AGENTIC_OS', 'Platform', 'Governance Registry'],
   '/executive':    ['DLX_AGENTIC_OS', 'Platform', 'Executive Deck'],
-  '/catalog':      ['DLX_AGENTIC_OS', 'Build', 'Agent Catalog'],
   '/builder':      ['DLX_AGENTIC_OS', 'Build', 'Agent Builder'],
   '/studio':       ['DLX_AGENTIC_OS', 'Discover', 'Imagination Studio'],
   '/agent-pool':   ['DLX_AGENTIC_OS', 'Discover', 'Agent Pool'],

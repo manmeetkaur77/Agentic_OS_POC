@@ -870,7 +870,7 @@ export default function AgentBuilder() {
             {template ? `Cloning from: ${template.name}` : prefill ? `Pre-filled from Imagination Studio — ${prefill.name}` : 'Design, test, and deploy enterprise AI agents with confidence'}
           </p>
         </div>
-        <button onClick={() => navigate('/catalog')} className="text-xs text-[#718096] flex items-center gap-1 hover:text-[#1A2340]">
+        <button onClick={() => navigate('/dashboard')} className="text-xs text-[#718096] flex items-center gap-1 hover:text-[#1A2340]">
           <X size={13} /> Cancel
         </button>
       </div>

@@ -71,6 +71,16 @@ except FileNotFoundError:
     # ^ If agents.json is missing, start with empty pool (Nova will say "no agents registered")
 
 
+# ── Workflow pool — loaded from workflows.json at startup ──────────────────────
+
+_workflows_path = Path(__file__).parent / "workflows.json"
+
+try:
+    WORKFLOW_POOL: list[dict] = json.loads(_workflows_path.read_text(encoding="utf-8"))
+except FileNotFoundError:
+    WORKFLOW_POOL = []
+
+
 # ── Helper: build agent pool as readable text block for the system prompt ──────
 
 def _build_agent_pool_block() -> str:
@@ -503,6 +513,171 @@ async def clear_session(session_id: str):
 async def health():
     return {"status": "ok", "sessions": len(sessions)}
     # ^ Simple liveness check. "sessions" count lets you see how many active conversations are in memory.
+
+
+
+# ── Endpoint 7: List workflow pool ─────────────────────────────────────────────
+
+@app.get("/workflows")
+async def list_workflows():
+    return WORKFLOW_POOL
+
+
+# ── Endpoint 8: Workflow analysis — 3-scenario matching ───────────────────────
+
+class WorkflowAnalyzeRequest(BaseModel):
+    problem: str
+    session_id: str = ""
+
+
+@app.post("/workflow/analyze")
+async def workflow_analyze(req: WorkflowAnalyzeRequest):
+    """
+    Intelligently decompose a business problem into a sequential agent chain.
+    Each step is dynamically matched against the live agent pool — no hardcoded workflows.
+    Returns scenario 1 / 2 / 3 with a full chain ready for visual rendering.
+    """
+
+    # Build a rich agent pool description for Nova to reason against
+    agent_pool_text = ""
+    for a in AGENT_POOL:
+        caps  = "\n      - ".join(a.get("capabilities", []))
+        tools = ", ".join(a.get("tools", []))
+        solves     = ", ".join(a.get("solves", []))
+        not_solves = ", ".join(a.get("doesNotSolve", []))
+        agent_pool_text += (
+            f"AGENT: {a['name']} (ID: {a['id']})\n"
+            f"  Segment     : {a.get('segment','')}\n"
+            f"  Description : {a.get('description','')}\n"
+            f"  Capabilities:\n      - {caps}\n"
+            f"  Tools       : {tools}\n"
+            f"  Solves      : {solves}\n"
+            f"  Does NOT solve: {not_solves}\n\n"
+        )
+
+    system_prompt = """You are Nova, an intelligent workflow architect inside DLX_AGENTIC_OS.
+
+TASK
+Given a business problem, you must:
+1. Break it into 2–5 logical sequential STEPS that together solve the problem end-to-end.
+2. For each step, find the BEST matching agent from the registered pool — or mark it as missing.
+3. Return a structured JSON chain the UI can render as a visual flow diagram.
+
+MATCHING RULES
+- "full"    → an existing agent covers this step completely. Use its exact name and ID.
+- "partial" → an existing agent covers it partially; name the specific gap.
+- "none"    → no registered agent handles this step at all.
+
+SCENARIO DETERMINATION
+- Scenario 3 (all green)  : every step is "full"  → workflow is ready to deploy
+- Scenario 2 (mixed)      : at least one step is "partial" or "none" but some are "full"
+- Scenario 1 (all red)    : every step is "none"  → nothing exists, generate spec_doc for Velox
+
+OUTPUT — return ONLY raw JSON, no markdown fences, no prose outside the object:
+{
+  "scenario": 2,
+  "summary": "One sentence: what the problem needs, what exists, what is missing.",
+  "chain": [
+    {
+      "step": 1,
+      "title": "Short action title (4–6 words)",
+      "description": "One sentence: what happens at this step and why it matters.",
+      "status": "full",
+      "agent_id": "agent-001",
+      "agent_name": "Exact Agent Name from pool",
+      "agent_role": "One sentence: what this specific agent does at this step.",
+      "match_score": 94,
+      "covers": "What the agent covers at this step.",
+      "gap": null,
+      "suggestion": null,
+      "tools": ["tool-a", "tool-b"]
+    },
+    {
+      "step": 2,
+      "title": "Short action title",
+      "description": "One sentence description.",
+      "status": "partial",
+      "agent_id": "agent-003",
+      "agent_name": "Exact Agent Name",
+      "agent_role": "What it does here.",
+      "match_score": 65,
+      "covers": "What it covers.",
+      "gap": "Specific capability that is missing.",
+      "suggestion": "Add X tool or extend with Y capability.",
+      "tools": ["tool-c"]
+    },
+    {
+      "step": 3,
+      "title": "Short action title",
+      "description": "One sentence description.",
+      "status": "none",
+      "agent_id": null,
+      "agent_name": null,
+      "agent_role": null,
+      "match_score": 0,
+      "covers": null,
+      "gap": "No registered agent handles this.",
+      "suggestion": "Build a new agent named X with tools Y and Z.",
+      "tools": ["suggested-tool-1", "suggested-tool-2"]
+    }
+  ],
+  "spec_doc": {
+    "title": "Build Specification — <workflow name>",
+    "problem": "Restated problem in one sentence.",
+    "steps_to_build": [
+      {
+        "step": 3,
+        "agent_name": "Suggested Agent Name",
+        "role": "What it does in the workflow.",
+        "tools": ["tool-1", "tool-2"],
+        "capabilities": ["capability 1", "capability 2"],
+        "trigger": "event/schedule/webhook",
+        "estimated_roi": "e.g. saves 4 hrs/day per analyst"
+      }
+    ],
+    "next_step": "Take this specification to the Velox platform and build the missing agents from scratch."
+  }
+}
+
+STRICT RULES
+- chain must have 2–5 items — exactly as many steps as the problem genuinely requires.
+- agent_id and agent_name must be exact values from the pool, or null for "none" steps.
+- CRITICAL: NEVER assign the same agent_id to more than one step. Every step must use a DIFFERENT agent, or null. If no other registered agent fits a step, mark it status "none" and set agent_id/agent_name to null.
+- Each step must represent a DISTINCT phase of the workflow — intake, processing, decision, notification, etc. Never duplicate a step's purpose.
+- Make each step title and description UNIQUE and specific to what happens at that phase.
+- spec_doc.steps_to_build must ONLY include steps whose status is "none" — never "full" or "partial".
+- If scenario is 3 (all full), omit spec_doc entirely.
+- If scenario is 2 (mixed), omit spec_doc entirely.
+- Only include spec_doc when scenario is 1.
+- match_score: 85–99 for full, 40–84 for partial, 0 for none.
+"""
+
+    user_message = f"""Business problem:
+{req.problem}
+
+REGISTERED AGENT POOL ({len(AGENT_POOL)} agents):
+{agent_pool_text if agent_pool_text else "(empty — no agents registered yet)"}
+
+Decompose this problem into a sequential agent chain and return the JSON."""
+
+    try:
+        response = bedrock.converse(
+            modelId=BEDROCK_MODEL_ID,
+            system=[{"text": system_prompt}],
+            messages=[{"role": "user", "content": [{"text": user_message}]}],
+            inferenceConfig={"maxTokens": 4096, "temperature": 0},
+        )
+        text = response["output"]["message"]["content"][0]["text"].strip()
+
+        # Strip markdown code fences if Claude wraps its response
+        text = re.sub(r'^```(?:json)?', '', text, flags=re.MULTILINE).strip()
+        text = re.sub(r'```$',          '', text, flags=re.MULTILINE).strip()
+
+        result = json.loads(text)
+        return result
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Workflow analysis failed: {str(e)}")
 
 
 # ── Entry point — only runs when executed directly (python agent.py) ───────────

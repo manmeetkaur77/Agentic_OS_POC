@@ -32,6 +32,18 @@ const useStore = create((set) => ({
   setNovaSession: (s) => set({ novaSession: s }),
   clearNovaSession: () => set({ novaSession: null }),
 
+  // Workflow approvals — submitted from Imagination Studio "Send for Approval"
+  pendingWorkflows: [],
+  addPendingWorkflow: (wf) => set((s) => ({
+    pendingWorkflows: [
+      ...s.pendingWorkflows,
+      { ...wf, id: wf.id || Date.now(), status: 'pending', submittedAt: new Date().toISOString() },
+    ],
+  })),
+  updateWorkflowStatus: (id, status) => set((s) => ({
+    pendingWorkflows: s.pendingWorkflows.map(w => w.id === id ? { ...w, status } : w),
+  })),
+
   setAgents:    (agents)    => set({ agents }),
   setMetrics:   (metrics)   => set({ metrics }),
   setMerchants: (merchants) => set({ merchants }),

@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import {
   Sparkles, Send, FileText, CheckCircle, AlertCircle, XCircle,
   Bot, Zap, ArrowRight, Plus, Edit3, RotateCcw, Loader,
   TrendingUp, Users, Clock, DollarSign, ChevronRight, Upload, Lightbulb,
-  Play, Terminal, ChevronDown, GitBranch, Search, Download
+  Play, Terminal, ChevronDown, GitBranch, Search, Download, GitMerge, Layers,
+  X, Cpu
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
@@ -355,7 +356,7 @@ function AgentRecommendationCard({ agentName, agentId, segment, solvedNeeds, par
                         <span className="text-xs font-bold text-amber-600 flex-shrink-0">{match.score}%</span>
                       </div>
                       <button
-                        onClick={(e) => { e.stopPropagation(); navigate('/agent-analyst', { state: { template: agentById[agentId] || { name: agentName } } }) }}
+                        onClick={(e) => { e.stopPropagation(); navigate('/builder', { state: { template: agentById[agentId] || { name: agentName } } }) }}
                         className="mt-2 w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-white border border-amber-300 hover:bg-amber-100 transition-all"
                       >
                         <Edit3 size={10} /> Modify this agent to fill the gap →
@@ -375,12 +376,775 @@ function AgentRecommendationCard({ agentName, agentId, segment, solvedNeeds, par
                   <Play size={11} /> Deploy Now
                 </button>
                 <button
-                  onClick={(e) => { e.stopPropagation(); navigate('/agent-analyst', { state: { template: agentById[agentId] } }) }}
+                  onClick={(e) => { e.stopPropagation(); navigate('/builder', { state: { template: agentById[agentId] } }) }}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-[#4A5568] bg-white border border-[#E2E8F0] hover:bg-[#F7F8FA] transition-all"
                 >
                   <Edit3 size={11} /> Open in Builder
                 </button>
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Intelligent Workflow Visual Components ──────────────────────────────────
+
+const NODE_STYLE = {
+  full:    { ring: '#10B981', bg: '#F0FDF4', text: '#065F46', label: 'Ready'       },
+  partial: { ring: '#F59E0B', bg: '#FFFBEB', text: '#92400E', label: 'Needs Work'  },
+  none:    { ring: '#EF4444', bg: '#FEF2F2', text: '#991B1B', label: 'Build Needed'},
+}
+
+function WorkflowGraphNode({ step, index, isSelected, onClick }) {
+  const st = NODE_STYLE[step.status] || NODE_STYLE.none
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.75 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.1 }}
+      onClick={onClick}
+      className="flex flex-col items-center gap-1.5 focus:outline-none group"
+    >
+      {/* Circle node */}
+      <div
+        className="w-14 h-14 rounded-full flex items-center justify-center border-4 transition-all duration-200 shadow-sm group-hover:shadow-lg"
+        style={{
+          borderColor: st.ring,
+          background: isSelected ? st.ring : '#fff',
+          transform: isSelected ? 'scale(1.12)' : 'scale(1)',
+        }}
+      >
+        <span className="text-sm font-extrabold" style={{ color: isSelected ? '#fff' : st.ring }}>
+          {index + 1}
+        </span>
+      </div>
+      {/* Agent name */}
+      <p className="text-center text-xs font-semibold text-[#1A2340] max-w-[76px] leading-tight line-clamp-2" title={step.agent_name || 'New Agent'}>
+        {step.agent_name || 'New Agent'}
+      </p>
+      {/* Status pill */}
+      <span className="text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap" style={{ background: st.bg, color: st.text, border: `1px solid ${st.ring}40` }}>
+        {st.label}
+      </span>
+    </motion.button>
+  )
+}
+
+function WorkflowFlowDiagram({ result, navigate }) {
+  const [selectedIndex, setSelectedIndex] = useState(null)
+
+  if (!result) return null
+  if (!result.chain?.length) return null
+
+  const chain        = result.chain
+  const selectedStep = selectedIndex !== null ? chain[selectedIndex] : null
+
+  const fullCount    = chain.filter(s => s.status === 'full').length
+  const partialCount = chain.filter(s => s.status === 'partial').length
+  const noneCount    = chain.filter(s => s.status === 'none').length
+
+  const scenarioColor  = noneCount > 0 ? '#EF4444' : partialCount > 0 ? '#F59E0B' : '#10B981'
+  const scenarioBg     = noneCount > 0 ? '#FEF2F2' : partialCount > 0 ? '#FFFBEB' : '#F0FDF4'
+  const scenarioBorder = noneCount > 0 ? '#FECACA' : partialCount > 0 ? '#FDE68A' : '#BBF7D0'
+  const ScenarioIcon   = noneCount > 0 ? XCircle   : partialCount > 0 ? AlertCircle : CheckCircle
+  const scenarioLabel  = noneCount > 0 ? 'Build Required' : partialCount > 0 ? 'Partial Match — Needs Work' : 'Workflow Ready to Deploy'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+      className="rounded-2xl border-2 overflow-hidden bg-white"
+      style={{ borderColor: scenarioBorder }}
+    >
+      {/* ── Status banner ── */}
+      <div className="px-4 py-3 flex items-start gap-2.5" style={{ background: scenarioBg }}>
+        <ScenarioIcon size={16} style={{ color: scenarioColor }} className="mt-0.5 flex-shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold" style={{ color: scenarioColor }}>{scenarioLabel}</p>
+          {result.summary && (
+            <p className="text-xs text-[#718096] mt-0.5 leading-relaxed">{result.summary}</p>
+          )}
+          <div className="flex items-center gap-3 mt-2">
+            {fullCount    > 0 && <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600"><CheckCircle size={9}/> {fullCount} ready</span>}
+            {partialCount > 0 && <span className="flex items-center gap-1 text-xs font-semibold text-amber-600"><AlertCircle size={9}/> {partialCount} partial</span>}
+            {noneCount    > 0 && <span className="flex items-center gap-1 text-xs font-semibold text-red-500"><XCircle size={9}/> {noneCount} missing</span>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Horizontal node graph ── */}
+      <div className="px-4 py-5 bg-white border-t" style={{ borderColor: scenarioBorder }}>
+        <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider mb-4 flex items-center gap-1.5">
+          <GitMerge size={11} /> Agent Chain — tap a node to inspect
+        </p>
+        <div className="flex items-start overflow-x-auto pb-2 gap-0">
+          {chain.map((step, i) => (
+            <div key={step.step} className="flex items-center flex-shrink-0">
+              <WorkflowGraphNode
+                step={step}
+                index={i}
+                isSelected={selectedIndex === i}
+                onClick={() => setSelectedIndex(selectedIndex === i ? null : i)}
+              />
+              {i < chain.length - 1 && (
+                <div className="flex items-center mx-2 mb-9 flex-shrink-0">
+                  <div className="w-5 h-0.5 bg-[#CBD5E0]" />
+                  <div style={{
+                    borderLeft:   '6px solid #CBD5E0',
+                    borderTop:    '4px solid transparent',
+                    borderBottom: '4px solid transparent',
+                    width: 0, height: 0,
+                  }} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Step summary list ── */}
+      <div className="px-4 py-3 bg-[#F7F8FA] border-t" style={{ borderColor: '#E2E8F0' }}>
+        <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider mb-2">Workflow Steps</p>
+        <div className="space-y-2">
+          {chain.map((step, i) => {
+            const st = NODE_STYLE[step.status] || NODE_STYLE.none
+            return (
+              <div key={step.step} className="flex items-start gap-2">
+                <span
+                  className="mt-0.5 w-4 h-4 rounded-full flex-shrink-0 flex items-center justify-center text-white font-bold"
+                  style={{ background: st.ring, fontSize: 9 }}
+                >
+                  {i + 1}
+                </span>
+                <p className="text-xs leading-relaxed">
+                  <span className="font-semibold text-[#1A2340]">{step.agent_name || `Step ${i + 1}`}</span>
+                  <span className="text-[#9BA8BA]"> — {step.description}</span>
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ── Selected node detail panel ── */}
+      <AnimatePresence>
+        {selectedStep && (
+          <motion.div
+            key={selectedIndex}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22 }}
+            className="overflow-hidden border-t-2"
+            style={{ borderColor: NODE_STYLE[selectedStep.status]?.ring || '#CBD5E0' }}
+          >
+            <div className="px-4 py-4 bg-white space-y-3">
+              {/* Panel header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0"
+                    style={{ background: NODE_STYLE[selectedStep.status]?.ring || '#CBD5E0' }}
+                  >
+                    {selectedStep.step}
+                  </span>
+                  <p className="text-sm font-bold text-[#1A2340]">{selectedStep.title}</p>
+                </div>
+                {selectedStep.match_score > 0 && (
+                  <span className="text-xs font-semibold text-[#9BA8BA]">{selectedStep.match_score}% match</span>
+                )}
+              </div>
+
+              {/* Covers */}
+              {selectedStep.covers && (
+                <div className="rounded-lg bg-emerald-50 border border-emerald-200 px-3 py-2">
+                  <p className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Covers</p>
+                  <p className="text-xs text-emerald-800 leading-relaxed">✓ {selectedStep.covers}</p>
+                </div>
+              )}
+
+              {/* Gap */}
+              {selectedStep.gap && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                  <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Gap</p>
+                  <p className="text-xs text-amber-800 leading-relaxed">⚠ {selectedStep.gap}</p>
+                </div>
+              )}
+
+              {/* Suggestion */}
+              {selectedStep.suggestion && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 px-3 py-2">
+                  <p className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-1">Suggestion</p>
+                  <p className="text-xs text-blue-800 leading-relaxed">→ {selectedStep.suggestion}</p>
+                </div>
+              )}
+
+              {/* Tools */}
+              {(selectedStep.tools || []).length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider mb-1.5">Tools</p>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedStep.tools.map(t => (
+                      <span key={t} className="text-xs px-2 py-0.5 rounded-md bg-[#F0F4FF] border border-[#C7D2FE] text-[#4338CA] font-medium">{t}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action: partial → modify */}
+              {selectedStep.status === 'partial' && (
+                <button
+                  onClick={() => navigate('/builder', {
+                    state: {
+                      prefill: {
+                        name:        selectedStep.agent_name,
+                        description: selectedStep.agent_role,
+                        suggestion:  selectedStep.suggestion,
+                        gap:         selectedStep.gap,
+                        tools:       selectedStep.tools,
+                      },
+                    },
+                  })}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-all"
+                  style={{ background: '#F59E0B' }}
+                >
+                  <Edit3 size={14} /> Modify Agent / Add Tool
+                </button>
+              )}
+
+              {/* Action: none → build from scratch */}
+              {selectedStep.status === 'none' && (
+                <button
+                  onClick={() => navigate('/builder', {
+                    state: {
+                      prefill: {
+                        name:        selectedStep.title,
+                        description: selectedStep.description,
+                        suggestion:  selectedStep.suggestion,
+                      },
+                    },
+                  })}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-all"
+                  style={{ background: '#EF4444' }}
+                >
+                  <Plus size={14} /> Build from Scratch
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Deploy action (all ready) ── */}
+      {noneCount === 0 && partialCount === 0 && (
+        <div className="px-4 py-3 border-t bg-emerald-50 flex gap-2" style={{ borderColor: '#BBF7D0' }}>
+          <button
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-all"
+            style={{ background: '#10B981' }}
+          >
+            <Play size={14} /> Deploy Full Workflow
+          </button>
+        </div>
+      )}
+
+      {/* ── Spec doc (full build needed) ── */}
+      {result.spec_doc && (
+        <div className="px-4 py-4 border-t bg-red-50 space-y-3" style={{ borderColor: '#FECACA' }}>
+          <p className="text-xs font-bold text-red-600 uppercase tracking-wider flex items-center gap-1.5">
+            <FileText size={11} /> Velox Build Specification
+          </p>
+          <div className="rounded-xl border border-red-200 bg-white p-3 space-y-2">
+            <p className="text-sm font-bold text-[#1A2340]">{result.spec_doc.title}</p>
+            <p className="text-xs text-[#718096] leading-relaxed">{result.spec_doc.problem}</p>
+            {(result.spec_doc.steps_to_build || []).map((s, idx) => (
+              <div key={idx} className="rounded-lg border border-[#E2E8F0] p-2.5 mt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-bold text-[#1A2340]">Step {s.step} — {s.agent_name}</p>
+                  {s.estimated_roi && <span className="text-xs text-emerald-600 font-semibold">💰 {s.estimated_roi}</span>}
+                </div>
+                <p className="text-xs text-[#718096] mb-1.5">{s.role}</p>
+                <div className="flex flex-wrap gap-1">
+                  {(s.tools || []).map(t => (
+                    <span key={t} className="text-xs px-1.5 py-0.5 rounded bg-red-50 border border-red-200 text-red-600 font-medium">{t}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          {result.spec_doc.next_step && (
+            <p className="text-xs text-[#9BA8BA] italic leading-relaxed">{result.spec_doc.next_step}</p>
+          )}
+          <button
+            onClick={() => navigate('/agent-builder', { state: { prefill: result.spec_doc } })}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-all"
+            style={{ background: '#C8102E' }}
+          >
+            <ArrowRight size={14} /> Open Velox Platform &amp; Build from Scratch
+          </button>
+        </div>
+      )}
+    </motion.div>
+  )
+}
+
+// ─── Pipeline sub-components ─────────────────────────────────────────────────
+
+function PipelineTriggerNode({ label }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-dashed border-violet-300 bg-violet-50">
+      <div className="w-9 h-9 rounded-xl bg-violet-100 flex items-center justify-center flex-shrink-0">
+        <Zap size={17} className="text-violet-600" />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-violet-500 mb-0.5">Trigger</p>
+        <p className="text-sm font-semibold text-[#1A2340]">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+function PipelineArrow() {
+  return (
+    <div className="flex justify-center py-1">
+      <div className="flex flex-col items-center">
+        <div className="w-px h-5" style={{ background: 'linear-gradient(to bottom, #CBD5E0, #C8102E88)' }} />
+        <div style={{
+          width: 0, height: 0,
+          borderLeft: '5px solid transparent',
+          borderRight: '5px solid transparent',
+          borderTop: '6px solid #C8102E',
+          opacity: 0.55,
+        }} />
+      </div>
+    </div>
+  )
+}
+
+function PipelineOutputNode({ label }) {
+  return (
+    <div className="flex items-center gap-3 px-4 py-3 rounded-2xl border-2 border-emerald-300 bg-emerald-50">
+      <div className="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
+        <CheckCircle size={17} className="text-emerald-600" />
+      </div>
+      <div>
+        <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 mb-0.5">Output</p>
+        <p className="text-sm font-semibold text-[#1A2340]">{label}</p>
+      </div>
+    </div>
+  )
+}
+
+const STEP_STATUS = {
+  full:    { color: '#10B981', bg: '#F0FDF4', border: '#BBF7D0', pill: '#D1FAE5', label: 'Ready',        btnBg: '#10B981', btnText: 'View in Pool'    },
+  partial: { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', pill: '#FEF3C7', label: 'Needs Work',   btnBg: '#F59E0B', btnText: 'Modify in Velox' },
+  none:    { color: '#C8102E', bg: '#FEF2F2', border: '#FECACA', pill: '#FEE2E2', label: 'Build Needed', btnBg: '#C8102E', btnText: 'Build in Velox'   },
+}
+
+// ─── Generate a structured agent spec from a workflow step ────────────────────
+function generateAgentSpec(step) {
+  const name  = step.agent_name || step.title || 'New Agent'
+  const role  = step.agent_role || step.description || `Automation agent for the ${name} step`
+  const tools = step.tools || []
+  const toolLines = tools.length
+    ? tools.map(t => `  - ${t}`).join('\n')
+    : '  - (to be configured in Velox)'
+
+  const responsibilities = [
+    step.covers       ? `  - ${step.covers}` : `  - Process all incoming requests for this workflow step`,
+    step.gap          ? `  - Fill the identified gap: ${step.gap}` : null,
+    step.suggestion   ? `  - ${step.suggestion}` : null,
+    '  - Maintain a complete audit trail for every action taken',
+    '  - Escalate unresolvable exceptions to the human oversight team immediately',
+  ].filter(Boolean).join('\n')
+
+  const systemPrompt = `You are ${name}, an intelligent automation agent in the Deluxe Corporation DLX_AGENTIC_OS platform.
+
+ROLE
+${role}
+
+RESPONSIBILITIES
+${responsibilities}
+
+TOOLS
+${toolLines}
+
+GUARDRAILS
+  - Never perform irreversible actions without explicit human approval
+  - Always log actor, timestamp, and rationale for every decision
+  - On uncertainty — pause, flag, and surface to a human reviewer
+  - Adhere to all applicable data privacy and compliance requirements
+
+PIPELINE CONTEXT
+  This agent is Step ${step.step || '?'} in a multi-agent workflow analysed by Nova AI.
+  Expected output: ${step.covers || 'Processed result forwarded to the next pipeline step'}`
+
+  return { name, description: step.description || step.covers || '', role, systemPrompt: systemPrompt.trim(), tools, model: 'claude-sonnet-4-6' }
+}
+
+// ─── Agent Spec Modal (shown before entering Velox) ──────────────────────────
+function AgentSpecModal({ step, index, onClose, onOpenInVelox }) {
+  const spec = generateAgentSpec(step)
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: 'blur(8px)', background: 'rgba(10,18,40,0.72)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+        className="bg-white rounded-2xl w-full max-w-2xl flex flex-col overflow-hidden"
+        style={{ maxHeight: '88vh', boxShadow: '0 30px 80px rgba(0,0,0,0.45)' }}
+      >
+        {/* ── Header ── */}
+        <div className="px-6 py-5 flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)' }}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                <Terminal size={17} className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1 flex-wrap">
+                  <span className="text-xs font-bold uppercase tracking-widest text-white/40">Step {index + 1} · Agent Spec</span>
+                  <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30">Build Needed</span>
+                </div>
+                <p className="text-white font-bold text-lg leading-snug">{spec.name}</p>
+                {spec.role && <p className="text-white/45 text-xs mt-1 leading-relaxed line-clamp-2">{spec.role}</p>}
+              </div>
+            </div>
+            <button onClick={onClose}
+              className="w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center flex-shrink-0 transition-all mt-0.5">
+              <X size={13} className="text-white" />
+            </button>
+          </div>
+        </div>
+
+        {/* ── Scrollable body ── */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+          {/* Tools */}
+          {spec.tools.length > 0 && (
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#9BA8BA] mb-2.5 flex items-center gap-1.5">
+                <Zap size={10} /> Authorised Tools
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {spec.tools.map(t => (
+                  <span key={t} className="px-2.5 py-1 rounded-lg text-xs font-mono font-semibold bg-[#EFF6FF] border border-[#BFDBFE] text-[#1D4ED8]">{t}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* System Prompt — dark code editor style */}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#9BA8BA] mb-2.5 flex items-center gap-1.5">
+              <Terminal size={10} /> System Prompt
+            </p>
+            <div className="rounded-xl overflow-hidden" style={{ background: '#0F172A', border: '1px solid #1E293B' }}>
+              {/* Window chrome */}
+              <div className="flex items-center gap-2 px-4 py-2.5" style={{ borderBottom: '1px solid #1E293B' }}>
+                <div className="flex gap-1.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FF5F56]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E]" />
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#27C93F]" />
+                </div>
+                <span className="text-xs font-mono" style={{ color: 'rgba(255,255,255,0.2)' }}>system_prompt.txt</span>
+              </div>
+              <pre className="px-4 py-4 text-xs leading-relaxed overflow-auto whitespace-pre-wrap font-mono"
+                style={{ color: '#94A3B8', maxHeight: '240px' }}>
+                {spec.systemPrompt}
+              </pre>
+            </div>
+          </div>
+
+          {/* Recommended model */}
+          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
+            <Cpu size={14} className="text-[#8B5CF6] flex-shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-[#1A2340]">Recommended Model</p>
+              <p className="text-xs text-[#718096] mt-0.5">
+                <span className="font-mono text-[#4338CA]">claude-sonnet-4-6</span>
+                {' '}— optimal balance of speed &amp; reasoning for automation
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Footer ── */}
+        <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-between flex-shrink-0"
+          style={{ background: '#F7F8FA', borderRadius: '0 0 1rem 1rem' }}>
+          <p className="text-xs text-[#718096]">This spec is pre-filled into Velox — you can refine before deploying.</p>
+          <div className="flex items-center gap-2">
+            <button onClick={onClose}
+              className="px-4 py-2 rounded-lg text-xs font-medium text-[#4A5568] bg-white border border-[#E2E8F0] hover:bg-[#F7F8FA] transition-all">
+              Close
+            </button>
+            <button
+              onClick={() => onOpenInVelox(spec)}
+              className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold text-white transition-all hover:opacity-90 active:scale-95"
+              style={{ background: 'linear-gradient(135deg,#C8102E 0%,#9B0D24 100%)' }}
+            >
+              <Terminal size={12} /> Open in Velox →
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
+// ─── Agent Pipeline Card ──────────────────────────────────────────────────────
+function AgentPipelineCard({ step, index, navigate, isBuilt, isSkipped, onOpenSpec, onSkip }) {
+  const s = STEP_STATUS[step.status] || STEP_STATUS.none
+
+  // ── Built state ──
+  if (isBuilt) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+        transition={{ duration: 0.22 }}
+        className="rounded-2xl border-2 overflow-hidden border-emerald-300"
+      >
+        <div className="h-1 bg-emerald-500" />
+        <div className="px-4 py-3 flex items-center gap-3 bg-emerald-50">
+          <div className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm"
+            style={{ border: '2.5px solid #10B981' }}>
+            <CheckCircle size={16} className="text-emerald-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm font-bold text-[#1A2340] truncate">{step.agent_name || step.title}</p>
+              <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-200 text-emerald-800">✓ Built</span>
+            </div>
+            <p className="text-xs text-emerald-700 mt-0.5">Agent configured &amp; saved to this workflow</p>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
+  // ── Skipped state ──
+  if (isSkipped) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }} animate={{ opacity: 0.55 }}
+        transition={{ duration: 0.22 }}
+        className="rounded-2xl border-2 overflow-hidden border-[#E2E8F0]"
+      >
+        <div className="h-1 bg-[#CBD5E0]" />
+        <div className="px-4 py-3 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-full bg-[#F7F8FA] flex items-center justify-center flex-shrink-0"
+            style={{ border: '2.5px solid #CBD5E0' }}>
+            <span className="text-sm font-black text-[#9BA8BA]">{index + 1}</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-[#9BA8BA] truncate">{step.agent_name || step.title}</p>
+              <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F0F2F5] text-[#9BA8BA]">Skipped</span>
+            </div>
+            <p className="text-xs text-[#CBD5E0] mt-0.5">This step will not be built</p>
+          </div>
+        </div>
+      </motion.div>
+    )
+  }
+
+  // ── Active / normal state ──
+  const handleAction = () => {
+    if (step.status === 'full') {
+      navigate('/agent-pool')
+    } else {
+      onOpenSpec(step, index)
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.08, duration: 0.28 }}
+      className="rounded-2xl border-2 overflow-hidden"
+      style={{ borderColor: s.border }}
+    >
+      {/* Colour accent bar */}
+      <div className="h-1" style={{ background: s.color }} />
+
+      {/* Card header */}
+      <div className="px-4 py-3 flex items-center gap-3" style={{ background: s.bg }}>
+        <div
+          className="w-9 h-9 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm font-black text-sm"
+          style={{ border: `2.5px solid ${s.color}`, color: s.color }}
+        >
+          {index + 1}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-sm font-bold text-[#1A2340] truncate">{step.agent_name || step.title}</p>
+            <span className="flex-shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold"
+              style={{ color: s.color, background: s.pill }}>
+              {s.label}
+            </span>
+          </div>
+          {step.description && (
+            <p className="text-xs text-[#718096] mt-0.5 line-clamp-2 leading-relaxed">{step.description}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Card body */}
+      <div className="px-4 pb-4 pt-3 bg-white space-y-2.5">
+        {/* Tools */}
+        {(step.tools || []).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {step.tools.map(t => (
+              <span key={t} className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-[#F0F4FF] border border-[#C7D2FE] text-[#4338CA]">{t}</span>
+            ))}
+          </div>
+        )}
+        {step.covers && (
+          <div className="px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+            <p className="text-xs text-emerald-700 leading-relaxed">✓ {step.covers}</p>
+          </div>
+        )}
+        {step.gap && (
+          <div className="px-3 py-2 rounded-xl bg-amber-50 border border-amber-200">
+            <p className="text-xs text-amber-700 leading-relaxed">⚠ Gap: {step.gap}</p>
+          </div>
+        )}
+        {step.suggestion && step.status !== 'full' && (
+          <div className="px-3 py-2 rounded-xl bg-blue-50 border border-blue-200">
+            <p className="text-xs text-blue-700 leading-relaxed">→ {step.suggestion}</p>
+          </div>
+        )}
+
+        {/* CTA row — action button + skip */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleAction}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: s.btnBg }}
+          >
+            {step.status === 'none'    && <><Terminal size={11} /> {s.btnText}</>}
+            {step.status === 'partial' && <><Edit3    size={11} /> {s.btnText}</>}
+            {step.status === 'full'    && <><Play     size={11} /> {s.btnText}</>}
+          </button>
+          {/* Skip option — only for steps that need building */}
+          {step.status !== 'full' && (
+            <button
+              onClick={() => onSkip(index)}
+              className="px-3 py-2.5 rounded-xl text-xs font-medium text-[#9BA8BA] border border-[#E2E8F0] hover:text-[#718096] hover:border-[#CBD5E0] bg-white transition-all whitespace-nowrap"
+            >
+              Skip
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+function WorkflowPipelineView({ result, navigate, builtSteps, skippedSteps, onOpenSpec, onSkip, onSubmitWorkflow }) {
+  if (!result) return null
+  const chain        = result.chain || []
+  const noneCount    = chain.filter(s => s.status === 'none').length
+  const partialCount = chain.filter(s => s.status === 'partial').length
+  const readyCount   = chain.filter(s => s.status === 'full').length
+
+  // Determine which indices need building (status !== 'full')
+  const buildNeededIndices = chain
+    .map((step, i) => step.status !== 'full' ? i : -1)
+    .filter(i => i !== -1)
+
+  // All complete when every build-needed step is either built or skipped
+  const bs = builtSteps  ?? {}
+  const ss = skippedSteps ?? {}
+  const builtOrSkippedCount = buildNeededIndices.filter(i => bs[i] || ss[i]).length
+  const allComplete = buildNeededIndices.length > 0 && builtOrSkippedCount === buildNeededIndices.length
+
+  return (
+    <div className="space-y-0">
+      {/* Summary banner */}
+      {result.summary && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+          className="mb-4 px-4 py-3 rounded-2xl border"
+          style={{ background: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)', borderColor: '#2D3A5C' }}
+        >
+          <p className="text-sm font-semibold text-white leading-relaxed">{result.summary}</p>
+          <div className="flex items-center gap-3 mt-2 flex-wrap">
+            {readyCount   > 0 && <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium"><CheckCircle size={10}/> {readyCount} ready</span>}
+            {partialCount > 0 && <span className="flex items-center gap-1 text-xs text-amber-400 font-medium"><AlertCircle size={10}/> {partialCount} need work</span>}
+            {noneCount    > 0 && <span className="flex items-center gap-1 text-xs text-red-400 font-medium"><XCircle size={10}/> {noneCount} to build</span>}
+            {builtOrSkippedCount > 0 && buildNeededIndices.length > 0 && (
+              <span className="flex items-center gap-1 text-xs text-violet-400 font-medium">
+                <CheckCircle size={10}/> {builtOrSkippedCount}/{buildNeededIndices.length} configured
+              </span>
+            )}
+          </div>
+        </motion.div>
+      )}
+
+      {/* Trigger */}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.05 }}>
+        <PipelineTriggerNode label={result.trigger || 'Automation Triggered'} />
+      </motion.div>
+
+      {/* Agent steps */}
+      {chain.map((step, i) => (
+        <div key={step.step || i}>
+          <PipelineArrow />
+          <AgentPipelineCard
+            step={step}
+            index={i}
+            navigate={navigate}
+            isBuilt={!!bs[i]}
+            isSkipped={!!ss[i]}
+            onOpenSpec={onOpenSpec}
+            onSkip={onSkip}
+          />
+        </div>
+      ))}
+
+      {/* Output */}
+      <PipelineArrow />
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: chain.length * 0.08 + 0.1 }}>
+        <PipelineOutputNode label={result.output || 'Process Complete — All Systems Updated'} />
+      </motion.div>
+
+      {/* ── Completion banner — appears when all build-needed agents are done ── */}
+      <AnimatePresence>
+        {allComplete && (
+          <motion.div
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 14 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+            className="mt-5 rounded-2xl border-2 border-emerald-300 overflow-hidden"
+            style={{ background: 'linear-gradient(135deg,#F0FDF4 0%,#DCFCE7 100%)' }}
+          >
+            <div className="p-5 text-center">
+              <div className="w-12 h-12 rounded-full bg-white border-2 border-emerald-300 flex items-center justify-center mx-auto mb-3 shadow-sm">
+                <CheckCircle size={22} className="text-emerald-500" />
+              </div>
+              <p className="text-base font-bold text-emerald-800 mb-1">All agents configured! 🎉</p>
+              <p className="text-xs text-emerald-600 leading-relaxed max-w-xs mx-auto mb-4">
+                Every step in this workflow has been built or marked as optional. Submit it for stakeholder approval.
+              </p>
+              <button
+                onClick={onSubmitWorkflow}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 active:scale-95"
+                style={{ background: 'linear-gradient(135deg,#10B981 0%,#059669 100%)', boxShadow: '0 4px 14px rgba(16,185,129,0.35)' }}
+              >
+                <Send size={14} /> Send for Approval →
+              </button>
             </div>
           </motion.div>
         )}
@@ -401,7 +1165,8 @@ const SEGMENT_KEY = {
 
 export default function ImagineStudio() {
   const navigate   = useNavigate()
-  const { addToast, addConfluencePage, novaSession, setNovaSession, clearNovaSession } = useStore()
+  const location   = useLocation()
+  const { addToast, addConfluencePage, novaSession, setNovaSession, clearNovaSession, addPendingWorkflow } = useStore()
 
   // Restore from Zustand store (persists while tab is open, cleared on refresh)
   const s = novaSession
@@ -420,9 +1185,15 @@ export default function ImagineStudio() {
   const [answeredIds, setAnsweredIds] = useState(() => new Set(s?.answeredIds ?? []))
   const [sessionId, setSessionId] = useState(() => s?.sessionId ?? crypto.randomUUID())
   const [agentPool, setAgentPool] = useState([])
+  const [workflowResult, setWorkflowResult] = useState(s?.workflowResult ?? null)
+  const [workflowLoading, setWorkflowLoading] = useState(false)
+  const [specModal,    setSpecModal]    = useState(null)            // { step, index } | null
+  const [builtSteps,   setBuiltSteps]   = useState(s?.builtSteps   ?? {})  // { [idx]: true }
+  const [skippedSteps, setSkippedSteps] = useState(s?.skippedSteps ?? {})  // { [idx]: true }
 
-  const chatEndRef = useRef(null)
-  const inputRef   = useRef(null)
+  const chatEndRef   = useRef(null)
+  const inputRef     = useRef(null)
+  const problemRef   = useRef('')   // captures the first user message for workflow analysis
 
   // Fetch agent pool from backend — single source of truth
   useEffect(() => {
@@ -442,9 +1213,22 @@ export default function ImagineStudio() {
       novaResults,
       novaSummary,
       sessionId,
-      answeredIds: [...answeredIds],
+      answeredIds:  [...answeredIds],
+      workflowResult,
+      builtSteps,
+      skippedSteps,
     })
-  }, [phase, messages, buildSugg, novaResults, novaSummary])
+  }, [phase, messages, buildSugg, novaResults, novaSummary, workflowResult, builtSteps, skippedSteps])
+
+  // Detect return from AgentBuilder — mark the step as built
+  useEffect(() => {
+    const built = location.state?.builtWorkflowStep
+    if (built !== undefined && built !== null) {
+      setBuiltSteps(prev => ({ ...prev, [built]: true }))
+      // Clear the navigation state so it doesn't re-fire on next render
+      navigate(location.pathname, { replace: true, state: {} })
+    }
+  }, [location.state?.builtWorkflowStep])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -504,6 +1288,11 @@ export default function ImagineStudio() {
         }
         setPhase(3)
         setTimeout(() => setPhase(4), 1200)
+        // Auto-trigger workflow pipeline analysis
+        setTimeout(() => {
+          const problem = problemRef.current || displayMessage
+          if (problem) analyzeWorkflow(problem)
+        }, 1600)
         setTimeout(() => {
           setPhase(5)
           const na = data.needsAnalysis
@@ -550,7 +1339,10 @@ export default function ImagineStudio() {
     const text = input.trim()
     setInput('')
     pushMsg('user', text)
-    if (phase === 0) setPhase(1)
+    if (phase === 0) {
+      setPhase(1)
+      problemRef.current = text   // capture the initial problem statement
+    }
 
     // After results are shown, append a silent re-analysis instruction so Nova
     // always produces a fresh <needs_analysis> block with the updated context.
@@ -582,249 +1374,431 @@ export default function ImagineStudio() {
   }
 
   const handleDownloadReport = () => {
-    if (!sc) return
-    const isNew = sc.type === 'report'
-    const date  = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    if (!sc && !workflowResult) return
+    const isNew = sc?.type === 'report'
+    const now   = new Date()
+    const date  = now.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const time  = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
 
-    // Build agent lookup from pool
-    const poolById   = Object.fromEntries(agentPool.map(a => [a.id,   a]))
+    // ── Data helpers ──
     const poolByName = Object.fromEntries(agentPool.map(a => [a.name, a]))
+    const needs      = isNew ? (sc?.needs || []) : []
+    const chain      = workflowResult?.chain || []
 
-    const coverageBadge = (c) => {
-      if (c === 'full')    return `<span class="badge badge-green">✓ Fully Covered</span>`
-      if (c === 'partial') return `<span class="badge badge-amber">⚠ Partial Match</span>`
-      return `<span class="badge badge-red">✗ Gap — Build Needed</span>`
+    const fullCount    = chain.filter(s => s.status === 'full').length
+    const partialCount = chain.filter(s => s.status === 'partial').length
+    const noneCount    = chain.filter(s => s.status === 'none').length
+
+    const coveredNeeds  = needs.filter(n => n.coverage === 'full').length
+    const partialNeeds  = needs.filter(n => n.coverage === 'partial').length
+    const gapNeeds      = needs.filter(n => n.coverage === 'none').length
+    const roiText       = isNew ? (sc?.roi || '') : ''
+
+    const reportTitle   = workflowResult?.summary || sc?.summary || sc?.needsTitle || 'Workflow Discovery Report'
+    const initialProblem = messages.find(m => m.role === 'user')?.content || reportTitle
+
+    // ── Pipeline HTML ──
+    const statusStyle = {
+      full:    { bg: '#F0FDF4', border: '#86EFAC', dot: '#22C55E', label: 'Ready',        text: '#166534' },
+      partial: { bg: '#FFFBEB', border: '#FCD34D', dot: '#F59E0B', label: 'Needs Work',   text: '#92400E' },
+      none:    { bg: '#FEF2F2', border: '#FCA5A5', dot: '#EF4444', label: 'Build Needed', text: '#991B1B' },
     }
 
-    // ── Section 1: Needs table
-    const needs = isNew ? sc.needs : []
-    const needsRows = needs.map(n => `
-      <tr>
-        <td style="font-weight:600;color:#1A2340;">${n.need}</td>
-        <td>${n.agent || '<span style="color:#CBD5E0;">—</span>'}</td>
-        <td>${coverageBadge(n.coverage)}</td>
-        <td style="color:#718096;font-size:12px;">${n.note}</td>
-      </tr>`).join('')
+    const pipelineHtml = chain.length ? `
+      <div style="display:flex;flex-direction:column;align-items:flex-start;gap:0;max-width:620px;margin:0 auto;">
+        <!-- Trigger node -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:14px;border:2px dashed #A78BFA;background:#F5F3FF;width:100%;margin-bottom:0;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#EDE9FE;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">⚡</div>
+          <div>
+            <div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7C3AED;margin-bottom:2px;">Trigger</div>
+            <div style="font-size:13px;font-weight:700;color:#1A2340;">${workflowResult?.trigger || 'Automation Triggered'}</div>
+          </div>
+        </div>
+        ${chain.map((step, i) => {
+          const st = statusStyle[step.status] || statusStyle.none
+          const toolsHtml = (step.tools || []).map(t => `<span style="display:inline-block;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;padding:1px 7px;border-radius:5px;font-size:10px;font-family:monospace;margin:2px 2px 0 0;">${t}</span>`).join('')
+          return `
+          <!-- Arrow -->
+          <div style="display:flex;justify-content:flex-start;padding-left:22px;height:24px;align-items:center;">
+            <div style="display:flex;flex-direction:column;align-items:center;">
+              <div style="width:1px;height:14px;background:#CBD5E0;"></div>
+              <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #CBD5E0;"></div>
+            </div>
+          </div>
+          <!-- Agent step -->
+          <div style="border:2px solid ${st.border};border-radius:14px;overflow:hidden;width:100%;">
+            <div style="height:3px;background:${st.dot};"></div>
+            <div style="padding:14px 18px;background:${st.bg};">
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <div style="width:30px;height:30px;border-radius:50%;background:white;border:2.5px solid ${st.dot};display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:${st.dot};flex-shrink:0;">${i+1}</div>
+                <div style="flex:1;">
+                  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span style="font-size:14px;font-weight:800;color:#1A2340;">${step.agent_name || step.title}</span>
+                    <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;background:white;color:${st.text};border:1px solid ${st.border};">${st.label}</span>
+                  </div>
+                  <div style="font-size:12px;color:#718096;margin-top:2px;line-height:1.5;">${step.description || ''}</div>
+                </div>
+              </div>
+              ${toolsHtml ? `<div style="margin-top:6px;">${toolsHtml}</div>` : ''}
+              ${step.covers ? `<div style="margin-top:8px;padding:8px 12px;background:rgba(16,185,129,0.08);border-radius:8px;font-size:11px;color:#065F46;">✓ ${step.covers}</div>` : ''}
+              ${step.gap    ? `<div style="margin-top:6px;padding:8px 12px;background:rgba(245,158,11,0.08);border-radius:8px;font-size:11px;color:#92400E;">⚠ Gap: ${step.gap}</div>` : ''}
+              ${step.suggestion && step.status !== 'full' ? `<div style="margin-top:6px;padding:8px 12px;background:rgba(59,130,246,0.08);border-radius:8px;font-size:11px;color:#1D4ED8;">→ ${step.suggestion}</div>` : ''}
+            </div>
+          </div>`
+        }).join('')}
+        <!-- Arrow -->
+        <div style="display:flex;justify-content:flex-start;padding-left:22px;height:24px;align-items:center;">
+          <div style="display:flex;flex-direction:column;align-items:center;">
+            <div style="width:1px;height:14px;background:#CBD5E0;"></div>
+            <div style="width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #CBD5E0;"></div>
+          </div>
+        </div>
+        <!-- Output node -->
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 18px;border-radius:14px;border:2px solid #86EFAC;background:#F0FDF4;width:100%;">
+          <div style="width:36px;height:36px;border-radius:10px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">✅</div>
+          <div>
+            <div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#16A34A;margin-bottom:2px;">Output</div>
+            <div style="font-size:13px;font-weight:700;color:#1A2340;">${workflowResult?.output || 'Process Complete — All Systems Updated'}</div>
+          </div>
+        </div>
+      </div>` : ''
 
-    // ── Section 2: Agent cards for matched agents
-    const matchedAgentNames = [...new Set(needs.filter(n => n.agent && n.coverage !== 'none').map(n => n.agent))]
-    const agentCardsHtml = matchedAgentNames.map(name => {
+    // ── Needs table ──
+    const needsRows = needs.map((n, i) => {
+      const bgEven = i % 2 === 0 ? '#ffffff' : '#F9FAFB'
+      const badge =
+        n.coverage === 'full'    ? `<span style="background:#D1FAE5;color:#065F46;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">✓ Fully Covered</span>` :
+        n.coverage === 'partial' ? `<span style="background:#FEF3C7;color:#92400E;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">⚠ Partial Match</span>` :
+                                   `<span style="background:#FEE2E2;color:#991B1B;padding:2px 9px;border-radius:99px;font-size:10px;font-weight:700;">✗ Build Needed</span>`
+      return `<tr style="background:${bgEven};">
+        <td style="padding:11px 14px;font-weight:600;color:#1A2340;font-size:13px;">${n.need}</td>
+        <td style="padding:11px 14px;font-size:12px;color:#4A5568;">${n.agent || '<span style="color:#CBD5E0;">—</span>'}</td>
+        <td style="padding:11px 14px;">${badge}</td>
+        <td style="padding:11px 14px;font-size:12px;color:#718096;line-height:1.55;">${n.note || ''}</td>
+      </tr>`
+    }).join('')
+
+    // ── Agent spec cards ──
+    const matchedNames   = [...new Set(needs.filter(n => n.agent && n.coverage !== 'none').map(n => n.agent))]
+    const agentCardsHtml = matchedNames.map(name => {
       const a = poolByName[name]
       if (!a) return ''
-      const caps   = (a.capabilities || []).map(c => `<li>${c}</li>`).join('')
-      const tools  = (a.tools || []).map(t => `<span class="chip chip-blue">${t}</span>`).join(' ')
-      const solves = (a.solves || []).map(s => `<span class="chip chip-green">✓ ${s}</span>`).join(' ')
-      const gaps   = (a.doesNotSolve || []).map(g => `<span class="chip chip-red">✗ ${g}</span>`).join(' ')
-      const sysprompt = `You are ${a.name}, an AI agent deployed by Deluxe Corporation on the DLX_AGENTIC_OS platform.\n\nSEGMENT: ${a.segment}\nPURPOSE: ${a.description}\n\nYOU ARE AUTHORISED TO:\n${(a.tools||[]).map(t=>`  - ${t}`).join('\n')}\n\nCAPABILITIES:\n${(a.capabilities||[]).map(c=>`  - ${c}`).join('\n')}\n\nYOU MUST NOT:\n  - Take actions outside your authorised tool list\n  - Make financial decisions without human approval\n  - Access data outside your segment scope\n\nAlways log every action with timestamp and rationale. Escalate anomalies immediately.`
+      const tools  = (a.tools || []).map(t => `<span style="display:inline-block;background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin:2px 2px 0 0;">${t}</span>`).join('')
+      const solves = (a.solves || []).map(s => `<div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:5px;"><span style="color:#16A34A;font-weight:700;flex-shrink:0;">✓</span><span style="font-size:12px;color:#374151;">${s}</span></div>`).join('')
+      const caps   = (a.capabilities || []).map(c => `<li style="font-size:12px;color:#4A5568;margin-bottom:4px;line-height:1.5;">${c}</li>`).join('')
       return `
-      <div class="agent-card">
-        <div class="agent-header">
+      <div style="border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:20px;break-inside:avoid;">
+        <div style="background:linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;">
           <div>
-            <div class="agent-name">${a.name}</div>
-            <div class="agent-meta">${a.segment} &nbsp;·&nbsp; v${a.version || '—'} &nbsp;·&nbsp; Model: ${a.model || 'claude-sonnet-4-6'} &nbsp;·&nbsp; Trigger: <code>${a.trigger || '—'}</code></div>
+            <div style="font-size:16px;font-weight:800;color:#ffffff;margin-bottom:3px;">${a.name}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.55);">${a.segment || ''} · v${a.version || '1.0'} · ${a.model || 'claude-sonnet-4-6'}</div>
           </div>
-          <span class="badge ${a.status === 'running' ? 'badge-green' : 'badge-amber'}">${a.status || 'idle'}</span>
+          <span style="background:${a.status === 'running' ? 'rgba(34,197,94,0.2)' : 'rgba(245,158,11,0.2)'};color:${a.status === 'running' ? '#4ADE80' : '#FCD34D'};padding:4px 10px;border-radius:99px;font-size:10px;font-weight:700;border:1px solid ${a.status === 'running' ? 'rgba(34,197,94,0.4)' : 'rgba(245,158,11,0.4)'};">${a.status === 'running' ? '● Live' : '● Standby'}</span>
         </div>
-
-        <div class="field-label">Description</div>
-        <p class="field-value">${a.description}</p>
-
-        <div class="field-label">Capabilities</div>
-        <ul class="caps-list">${caps}</ul>
-
-        <div class="two-col">
-          <div>
-            <div class="field-label">Authorised Tools (Guardrails)</div>
-            <div>${tools || '<span style="color:#CBD5E0;">None listed</span>'}</div>
-          </div>
-          <div>
-            <div class="field-label">Success Rate &amp; Deployments</div>
-            <p class="field-value">${a.successRate ?? '—'}% success &nbsp;·&nbsp; ${a.deployments ?? '—'} deployments</p>
-          </div>
+        <div style="padding:18px 20px;background:#ffffff;">
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9BA8BA;margin-bottom:5px;">Description</div>
+          <p style="font-size:13px;color:#4A5568;line-height:1.65;margin-bottom:14px;">${a.description || ''}</p>
+          ${caps ? `<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9BA8BA;margin-bottom:8px;">Capabilities</div><ul style="padding-left:16px;margin-bottom:14px;">${caps}</ul>` : ''}
+          ${tools ? `<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9BA8BA;margin-bottom:6px;">Authorised Tools</div><div style="margin-bottom:14px;">${tools}</div>` : ''}
+          ${solves ? `<div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#9BA8BA;margin-bottom:8px;">What It Solves</div><div>${solves}</div>` : ''}
+          ${(a.successRate != null) ? `<div style="margin-top:12px;padding:10px 14px;background:#F7F8FA;border-radius:8px;display:flex;gap:24px;"><div><div style="font-size:10px;color:#9BA8BA;">Success Rate</div><div style="font-size:16px;font-weight:800;color:#1A2340;">${a.successRate}%</div></div><div><div style="font-size:10px;color:#9BA8BA;">Deployments</div><div style="font-size:16px;font-weight:800;color:#1A2340;">${a.deployments ?? '—'}</div></div></div>` : ''}
         </div>
-
-        <div class="two-col" style="margin-top:12px;">
-          <div>
-            <div class="field-label">Solves</div>
-            <div>${solves}</div>
-          </div>
-          <div>
-            <div class="field-label">Does Not Solve</div>
-            <div>${gaps}</div>
-          </div>
-        </div>
-
-        <div class="field-label" style="margin-top:14px;">System Prompt</div>
-        <pre class="sysprompt">${sysprompt}</pre>
       </div>`
     }).join('')
 
-    // ── Section 3: Build recommendation card
-    const buildName = isNew ? sc.build_recommendation?.split(' — ')[0] : sc.buildSuggestion
-    const buildDesc = isNew ? sc.build_recommendation?.split(' — ').slice(1).join(' — ') : sc.buildDesc
-    const buildNeeds = needs.filter(n => n.coverage === 'none')
-    const suggestedTools = buildNeeds.flatMap(n => {
+    // ── Gaps section ──
+    const gaps = isNew ? (sc?.gaps || []) : []
+    const gapNeedsList = needs.filter(n => n.coverage === 'none')
+    const gapsHtml = gaps.length ? gaps.map((g, i) => `
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;background:${i%2===0?'#FEF2F2':'#FFF7F7'};border-radius:8px;margin-bottom:8px;">
+        <span style="color:#EF4444;font-size:16px;flex-shrink:0;margin-top:-1px;">✗</span>
+        <span style="font-size:13px;color:#1A2340;line-height:1.6;">${g}</span>
+      </div>`).join('') : ''
+
+    // ── Build recommendation ──
+    const buildRec  = isNew ? sc?.build_recommendation : null
+    const buildName = buildRec?.split(' — ')[0]
+    const buildDesc = buildRec?.split(' — ').slice(1).join(' — ')
+    const suggestedTools = [...new Set(gapNeedsList.flatMap(n => {
       const kw = n.need.toLowerCase()
       if (kw.includes('invoic') || kw.includes('reconcil')) return ['erp-read','payment-match','gl-write','exception-flag']
-      if (kw.includes('fraud') || kw.includes('detect'))   return ['txn-stream','anomaly-detect','hold-trigger']
-      if (kw.includes('onboard') || kw.includes('kyb'))    return ['kyb-verify','crm-write','email-send']
-      if (kw.includes('churn') || kw.includes('retention'))return ['crm-read','order-history','email-send']
-      if (kw.includes('enrich') || kw.includes('data'))    return ['data-fetch','profile-update','signal-score']
+      if (kw.includes('fraud')  || kw.includes('detect'))   return ['txn-stream','anomaly-detect','hold-trigger']
+      if (kw.includes('onboard')|| kw.includes('kyb'))      return ['kyb-verify','crm-write','email-send']
+      if (kw.includes('churn')  || kw.includes('retention'))return ['crm-read','order-history','email-send']
+      if (kw.includes('enrich') || kw.includes('data'))     return ['data-fetch','profile-update','signal-score']
       return ['api-read','data-write','notification-send']
-    })
-    const uniqueTools  = [...new Set(suggestedTools)]
-    const suggestedPrompt = buildName ? `You are ${buildName}, an AI agent built for Deluxe Corporation.\n\nPURPOSE: ${buildDesc || 'Automate the identified business process.'}\n\nCORE RESPONSIBILITIES:\n${buildNeeds.map(n=>`  - ${n.need}`).join('\n')}\n\nAUTHORISED TOOLS:\n${uniqueTools.map(t=>`  - ${t}`).join('\n')}\n\nGUARDRAILS:\n  - Only act within your defined tool scope\n  - Flag any anomaly or edge case to a human supervisor\n  - Log every action with timestamp, input, and outcome\n  - Never take irreversible financial actions autonomously\n  - Comply with Deluxe's PCI DSS, SOX, and CCPA policies\n\nOUTPUT FORMAT:\nReturn structured JSON for every action:\n{\n  "action": "<tool-name>",\n  "input": { ... },\n  "rationale": "<one sentence>",\n  "confidence": 0.0-1.0\n}` : ''
+    }))]
 
-    // ── Section 4: Conversation
-    const convHtml = messages.filter(m => m.content).map(m => m.role === 'user'
-      ? `<div style="margin:8px 0;text-align:right;"><span style="display:inline-block;background:#C8102E;color:#fff;padding:8px 14px;border-radius:16px 16px 4px 16px;font-size:13px;max-width:78%;">${m.content}</span></div>`
-      : `<div style="margin:8px 0;"><span style="display:inline-block;background:#F7F8FA;border:1px solid #E2E8F0;color:#1A2340;padding:8px 14px;border-radius:4px 16px 16px 16px;font-size:13px;max-width:85%;">${m.content}</span></div>`
+    // ── Conversation ──
+    const convHtml = messages.filter(m => m.content).map(m =>
+      m.role === 'user'
+        ? `<div style="margin:10px 0;text-align:right;"><span style="display:inline-block;background:#C8102E;color:#fff;padding:9px 14px;border-radius:16px 16px 4px 16px;font-size:13px;max-width:78%;line-height:1.55;">${m.content}</span><div style="font-size:10px;color:#9BA8BA;margin-top:3px;">You</div></div>`
+        : `<div style="margin:10px 0;display:flex;align-items:flex-start;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:#F7F8FA;border:1px solid #E2E8F0;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">✦</div><div><div style="font-size:10px;color:#9BA8BA;margin-bottom:3px;">Nova</div><span style="display:inline-block;background:#F7F8FA;border:1px solid #E2E8F0;color:#1A2340;padding:9px 14px;border-radius:4px 16px 16px 16px;font-size:13px;max-width:85%;line-height:1.6;">${m.content}</span></div></div>`
     ).join('')
 
-    const gapsHtml = (isNew && sc.gaps?.length) ? sc.gaps.map(g =>
-      `<li>${g}</li>`).join('') : ''
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nova Workflow Report — ${date}</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#F4F5F7;color:#1A2340;font-size:14px;}
+  .wrap{max-width:900px;margin:0 auto;padding:32px 20px 64px;}
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-      <title>Nova Agent Discovery Report — ${date}</title>
-      <style>
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1A2340;background:#fff;font-size:13px;}
-        .page{max-width:860px;margin:0 auto;padding:44px 52px;}
-        /* Cover */
-        .cover{border-bottom:3px solid #C8102E;padding-bottom:28px;margin-bottom:36px;}
-        .cover-logo{font-size:10px;font-weight:800;letter-spacing:.14em;color:#C8102E;text-transform:uppercase;margin-bottom:10px;}
-        h1{font-size:28px;font-weight:800;color:#1A2340;line-height:1.25;margin-bottom:6px;}
-        .meta{font-size:12px;color:#9BA8BA;margin-top:6px;}
-        /* Sections */
-        .section{margin-bottom:36px;}
-        .section-title{font-size:10px;font-weight:800;color:#9BA8BA;text-transform:uppercase;letter-spacing:.12em;padding-bottom:8px;border-bottom:1px solid #F0F2F5;margin-bottom:16px;}
-        /* Summary */
-        .summary-box{background:#F7F9FF;border-left:4px solid #C8102E;padding:16px 20px;border-radius:0 8px 8px 0;font-size:14px;line-height:1.75;color:#1A2340;}
-        /* Table */
-        table{width:100%;border-collapse:collapse;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden;font-size:12px;}
-        th{background:#1A2340;color:#fff;padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;}
-        td{padding:10px 12px;border-bottom:1px solid #F0F2F5;vertical-align:top;}
-        tr:nth-child(even) td{background:#F7F8FA;}
-        /* Badges */
-        .badge{padding:2px 9px;border-radius:999px;font-size:10px;font-weight:700;white-space:nowrap;}
-        .badge-green{background:#D1FAE5;color:#065F46;}
-        .badge-amber{background:#FEF3C7;color:#92400E;}
-        .badge-red{background:#FEE2E2;color:#991B1B;}
-        /* Chips */
-        .chip{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;margin:2px 2px 2px 0;}
-        .chip-blue{background:#EFF6FF;color:#1D4ED8;border:1px solid #BFDBFE;}
-        .chip-green{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0;}
-        .chip-red{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA;}
-        /* Agent card */
-        .agent-card{border:1px solid #E2E8F0;border-radius:10px;padding:20px 22px;margin-bottom:20px;break-inside:avoid;}
-        .agent-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;}
-        .agent-name{font-size:16px;font-weight:800;color:#1A2340;margin-bottom:3px;}
-        .agent-meta{font-size:11px;color:#9BA8BA;}
-        .agent-meta code{background:#F7F8FA;padding:1px 5px;border-radius:4px;font-size:10px;}
-        .field-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#9BA8BA;margin:12px 0 5px;}
-        .field-value{font-size:13px;color:#4A5568;line-height:1.6;}
-        .caps-list{padding-left:16px;}
-        .caps-list li{font-size:12px;color:#4A5568;margin-bottom:4px;line-height:1.5;}
-        .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:10px;}
-        .sysprompt{background:#F7F8FA;border:1px solid #E2E8F0;border-radius:6px;padding:14px 16px;font-size:11px;font-family:'Courier New',monospace;color:#374151;white-space:pre-wrap;line-height:1.6;margin-top:6px;}
-        /* Build card */
-        .build-card{background:#FFFBEB;border:1px solid #FDE68A;border-radius:10px;padding:20px 22px;break-inside:avoid;}
-        .build-label{font-size:10px;font-weight:800;color:#D97706;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;}
-        .build-name{font-size:18px;font-weight:800;color:#1A2340;margin-bottom:4px;}
-        .build-desc{font-size:13px;color:#4A5568;line-height:1.6;margin-bottom:14px;}
-        ul{padding-left:18px;}
-        ul li{margin-bottom:6px;font-size:13px;color:#4A5568;line-height:1.6;}
-        /* Footer */
-        .footer{margin-top:52px;padding-top:14px;border-top:1px solid #E2E8F0;font-size:10px;color:#9BA8BA;display:flex;justify-content:space-between;}
-        .print-btn{position:fixed;top:16px;right:16px;background:#C8102E;color:#fff;border:none;padding:8px 18px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;z-index:999;box-shadow:0 2px 8px rgba(0,0,0,.2);}
-        .print-btn:hover{background:#a50e26;}
-        @media print{
-          .print-btn{display:none;}
-          body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-          .page{padding:24px 32px;}
-          .agent-card,.build-card{break-inside:avoid;}
-        }
-      </style>
-    </head><body>
-    <button class="print-btn" onclick="window.print()">🖨 Print / Save PDF</button>
-    <div class="page">
+  /* ── Cover ── */
+  .cover{background:linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%);border-radius:16px;padding:40px 48px;margin-bottom:28px;position:relative;overflow:hidden;}
+  .cover::before{content:'';position:absolute;top:-40px;right:-40px;width:240px;height:240px;border-radius:50%;background:rgba(200,16,46,0.12);}
+  .cover-eyebrow{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#C8102E;margin-bottom:12px;}
+  .cover-title{font-size:26px;font-weight:800;color:#ffffff;line-height:1.3;margin-bottom:10px;max-width:600px;}
+  .cover-sub{font-size:13px;color:rgba(255,255,255,0.55);line-height:1.6;margin-bottom:20px;}
+  .cover-meta{display:flex;align-items:center;gap:20px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,0.12);padding-top:16px;margin-top:4px;}
+  .cover-meta-item{font-size:11px;color:rgba(255,255,255,0.5);}
+  .cover-meta-item strong{color:rgba(255,255,255,0.85);font-weight:600;}
 
-      <div class="cover">
-        <div class="cover-logo">DLX_AGENTIC_OS — Deluxe Corporation</div>
-        <h1>Agent Discovery Report</h1>
-        <p class="meta">Generated by Nova &nbsp;·&nbsp; ${date} &nbsp;·&nbsp; Confidential &amp; Internal Use Only</p>
-      </div>
+  /* ── Stats strip ── */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:28px;}
+  .stat{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px 18px;}
+  .stat-val{font-size:26px;font-weight:800;color:#1A2340;line-height:1;margin-bottom:4px;}
+  .stat-label{font-size:11px;color:#9BA8BA;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  .stat-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
 
-      <!-- Problem Summary -->
-      <div class="section">
-        <div class="section-title">Problem Summary</div>
-        <div class="summary-box">${(isNew ? sc.summary : sc.needsTitle) || 'See conversation transcript below.'}</div>
-      </div>
+  /* ── Cards ── */
+  .card{background:#fff;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;margin-bottom:20px;}
+  .card-header{padding:16px 20px;border-bottom:1px solid #F0F2F5;display:flex;align-items:center;gap:10px;}
+  .card-header-icon{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .card-header-title{font-size:13px;font-weight:700;color:#1A2340;}
+  .card-header-sub{font-size:11px;color:#9BA8BA;}
+  .card-body{padding:20px;}
 
-      <!-- Needs Analysis Table -->
-      ${needsRows ? `<div class="section">
-        <div class="section-title">Needs Analysis &amp; Agent Coverage</div>
-        <table>
-          <thead><tr><th>Need</th><th>Matched Agent</th><th>Coverage</th><th>Notes</th></tr></thead>
-          <tbody>${needsRows}</tbody>
-        </table>
+  /* ── Summary ── */
+  .summary{border-left:4px solid #C8102E;background:#FFF5F5;padding:14px 18px;border-radius:0 10px 10px 0;font-size:14px;line-height:1.75;color:#1A2340;font-weight:500;}
+
+  /* ── Table ── */
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  thead{background:#1A2340;}
+  th{padding:10px 14px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fff;}
+  td{padding:11px 14px;border-bottom:1px solid #F0F2F5;vertical-align:top;}
+
+  /* ── Build rec ── */
+  .build-rec{background:linear-gradient(135deg,#FFFBEB 0%,#FFF7E6 100%);border:1.5px solid #FDE68A;border-radius:12px;padding:20px 22px;}
+  .build-eyebrow{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;color:#D97706;margin-bottom:8px;}
+  .build-name{font-size:18px;font-weight:800;color:#1A2340;margin-bottom:6px;}
+  .build-desc{font-size:13px;color:#4A5568;line-height:1.65;margin-bottom:16px;}
+
+  /* ── Next steps ── */
+  .step-row{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid #F0F2F5;}
+  .step-num{width:28px;height:28px;border-radius:50%;background:#1A2340;color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+  .step-title{font-size:13px;font-weight:700;color:#1A2340;margin-bottom:3px;}
+  .step-desc{font-size:12px;color:#718096;line-height:1.55;}
+
+  /* ── Print button ── */
+  .print-btn{position:fixed;bottom:28px;right:28px;background:#C8102E;color:#fff;border:none;padding:10px 22px;border-radius:99px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 20px rgba(200,16,46,0.4);z-index:999;display:flex;align-items:center;gap:7px;}
+  .print-btn:hover{background:#a50e26;}
+
+  /* ── Footer ── */
+  .footer{margin-top:40px;padding-top:16px;border-top:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#9BA8BA;}
+
+  @media print{
+    body{background:#fff;}
+    .wrap{padding:0 20px;}
+    .print-btn{display:none;}
+    .cover{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .card,.build-rec,.stat{break-inside:avoid;}
+  }
+</style>
+</head>
+<body>
+<button class="print-btn" onclick="window.print()">🖨&nbsp; Print / Save PDF</button>
+<div class="wrap">
+
+  <!-- ── Cover ── -->
+  <div class="cover">
+    <div class="cover-eyebrow">DLX_AGENTIC_OS · Deluxe Corporation · Confidential</div>
+    <div class="cover-title">${reportTitle}</div>
+    <div class="cover-sub">${initialProblem !== reportTitle ? initialProblem : 'Multi-agent workflow discovery &amp; recommendation report generated by Nova.'}</div>
+    <div class="cover-meta">
+      <div class="cover-meta-item">Generated by <strong>Nova AI</strong></div>
+      <div class="cover-meta-item">Date <strong>${date} · ${time}</strong></div>
+      <div class="cover-meta-item">Status <strong style="color:#4ADE80;">⬤ Analysis Complete</strong></div>
+      ${chain.length ? `<div class="cover-meta-item">Pipeline <strong>${chain.length} Agents</strong></div>` : ''}
+    </div>
+  </div>
+
+  <!-- ── Stats strip ── -->
+  <div class="stats">
+    ${chain.length ? `
+    <div class="stat">
+      <div class="stat-val">${chain.length}</div>
+      <div class="stat-label">Pipeline Steps</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:#22C55E;">${fullCount}</div>
+      <div class="stat-label"><span class="stat-dot" style="background:#22C55E;"></span>Ready</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:#F59E0B;">${partialCount}</div>
+      <div class="stat-label"><span class="stat-dot" style="background:#F59E0B;"></span>Needs Work</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:#EF4444;">${noneCount}</div>
+      <div class="stat-label"><span class="stat-dot" style="background:#EF4444;"></span>To Build</div>
+    </div>` : `
+    <div class="stat">
+      <div class="stat-val">${needs.length}</div>
+      <div class="stat-label">Needs Identified</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:#22C55E;">${coveredNeeds}</div>
+      <div class="stat-label"><span class="stat-dot" style="background:#22C55E;"></span>Fully Covered</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:#F59E0B;">${partialNeeds}</div>
+      <div class="stat-label"><span class="stat-dot" style="background:#F59E0B;"></span>Partial Match</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:#EF4444;">${gapNeeds}</div>
+      <div class="stat-label"><span class="stat-dot" style="background:#EF4444;"></span>Gaps</div>
+    </div>`}
+  </div>
+
+  <!-- ── Problem Summary ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#FEF2F2;">🎯</div>
+      <div><div class="card-header-title">Problem Summary</div><div class="card-header-sub">Identified by Nova from your discovery session</div></div>
+    </div>
+    <div class="card-body">
+      <div class="summary">${sc?.summary || reportTitle}</div>
+      ${roiText ? `<div style="margin-top:14px;display:inline-flex;align-items:center;gap:8px;background:#F0FDF4;border:1px solid #BBF7D0;padding:8px 14px;border-radius:8px;">
+        <span style="font-size:16px;">💰</span>
+        <div><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#166534;margin-bottom:1px;">Estimated ROI</div>
+        <div style="font-size:14px;font-weight:700;color:#1A2340;">${roiText}</div></div>
       </div>` : ''}
+    </div>
+  </div>
 
-      <!-- Matched Agent Detail Cards -->
-      ${agentCardsHtml ? `<div class="section">
-        <div class="section-title">Matched Agent Specifications</div>
-        ${agentCardsHtml}
-      </div>` : ''}
+  <!-- ── Workflow Pipeline ── -->
+  ${chain.length ? `
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#F5F3FF;">🔀</div>
+      <div><div class="card-header-title">Workflow Pipeline</div><div class="card-header-sub">${chain.length}-step multi-agent chain · Generated by Nova</div></div>
+    </div>
+    <div class="card-body">
+      ${pipelineHtml}
+    </div>
+  </div>` : ''}
 
-      <!-- Gaps -->
-      ${gapsHtml ? `<div class="section">
-        <div class="section-title">Identified Gaps</div>
-        <ul>${gapsHtml}</ul>
-      </div>` : ''}
+  <!-- ── Needs Analysis Table ── -->
+  ${needsRows ? `
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#EFF6FF;">📋</div>
+      <div><div class="card-header-title">Needs Analysis &amp; Agent Coverage</div><div class="card-header-sub">${needs.length} needs identified · mapped against ${agentPool.length} registered agents</div></div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead><tr><th>Business Need</th><th>Matched Agent</th><th>Coverage</th><th>Notes</th></tr></thead>
+        <tbody>${needsRows}</tbody>
+      </table>
+    </div>
+  </div>` : ''}
 
-      <!-- Build Recommendation -->
-      ${buildName ? `<div class="section">
-        <div class="section-title">Build Recommendation</div>
-        <div class="build-card">
-          <div class="build-label">💡 Recommended Agent to Build</div>
-          <div class="build-name">${buildName}</div>
-          <div class="build-desc">${buildDesc || ''}</div>
+  <!-- ── Matched Agent Specs ── -->
+  ${agentCardsHtml ? `
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#F0FDF4;">🤖</div>
+      <div><div class="card-header-title">Matched Agent Specifications</div><div class="card-header-sub">Existing agents that cover identified needs</div></div>
+    </div>
+    <div class="card-body">
+      ${agentCardsHtml}
+    </div>
+  </div>` : ''}
 
-          ${buildNeeds.length ? `
-          <div class="field-label">Needs This Agent Must Solve</div>
-          <ul>${buildNeeds.map(n=>`<li><strong>${n.need}</strong> — ${n.note}</li>`).join('')}</ul>` : ''}
+  <!-- ── Gaps ── -->
+  ${gapsHtml ? `
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#FEF2F2;">⚠️</div>
+      <div><div class="card-header-title">Identified Gaps</div><div class="card-header-sub">Capabilities missing from the current agent pool</div></div>
+    </div>
+    <div class="card-body">${gapsHtml}</div>
+  </div>` : ''}
 
-          <div class="field-label" style="margin-top:14px;">Suggested Authorised Tools (Guardrails)</div>
-          <div>${uniqueTools.map(t=>`<span class="chip chip-blue">${t}</span>`).join(' ')}</div>
-
-          <div class="field-label" style="margin-top:14px;">Suggested System Prompt</div>
-          <pre class="sysprompt">${suggestedPrompt}</pre>
-        </div>
-      </div>` : ''}
-
-      <!-- Conversation Transcript -->
-      <div class="section">
-        <div class="section-title">Full Conversation with Nova</div>
-        <div style="background:#F7F8FA;border:1px solid #E2E8F0;border-radius:8px;padding:16px 20px;">${convHtml}</div>
+  <!-- ── Build Recommendation ── -->
+  ${buildName ? `
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#FFFBEB;">💡</div>
+      <div><div class="card-header-title">Build Recommendation</div><div class="card-header-sub">Highest-value net-new agent to close the gap</div></div>
+    </div>
+    <div class="card-body">
+      <div class="build-rec">
+        <div class="build-eyebrow">Recommended Agent</div>
+        <div class="build-name">${buildName}</div>
+        <div class="build-desc">${buildDesc || ''}</div>
+        ${gapNeedsList.length ? `
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#D97706;margin-bottom:8px;">Needs This Agent Must Solve</div>
+          ${gapNeedsList.map(n => `<div style="display:flex;gap:8px;margin-bottom:6px;"><span style="color:#D97706;font-weight:700;">→</span><span style="font-size:13px;color:#1A2340;"><strong>${n.need}</strong>${n.note ? ' — ' + n.note : ''}</span></div>`).join('')}
+        ` : ''}
+        ${suggestedTools.length ? `
+          <div style="font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#D97706;margin:14px 0 8px;">Suggested Tools</div>
+          <div>${suggestedTools.map(t => `<span style="display:inline-block;background:#FEF3C7;color:#92400E;border:1px solid #FDE68A;padding:2px 8px;border-radius:6px;font-size:11px;font-family:monospace;font-weight:600;margin:2px 2px 0 0;">${t}</span>`).join('')}</div>
+        ` : ''}
       </div>
+    </div>
+  </div>` : ''}
 
-      <div class="footer">
-        <span>DLX_AGENTIC_OS — Deluxe Corporation &nbsp;·&nbsp; Confidential &amp; Internal Use Only</span>
-        <span>Nova Discovery Report &nbsp;·&nbsp; ${date}</span>
-      </div>
-    </div></body></html>`
+  <!-- ── Next Steps ── -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#F0F9FF;">🚀</div>
+      <div><div class="card-header-title">Recommended Next Steps</div><div class="card-header-sub">Actions to move from discovery to production</div></div>
+    </div>
+    <div class="card-body">
+      ${[
+        noneCount > 0 || gapNeedsList.length > 0 ? { title: 'Build missing agents in Velox', desc: `${noneCount || gapNeedsList.length} agent${(noneCount || gapNeedsList.length) !== 1 ? 's' : ''} need to be built. Open Agent Builder, use the recommended spec above, and deploy to staging first.` } : null,
+        partialCount > 0 || partialNeeds > 0 ? { title: 'Modify partial-match agents', desc: 'Extend existing agents with the missing tools or capabilities identified in the gap analysis above.' } : null,
+        { title: 'Send workflow for approval', desc: 'Once all agents are built and validated in staging, submit the full workflow pipeline for stakeholder sign-off.' },
+        { title: 'Monitor via Governance Registry', desc: 'After go-live, track SLA, audit logs, and exception rates in the Governance Registry dashboard.' },
+      ].filter(Boolean).map((s, i) => `
+        <div class="step-row" style="${i === 0 ? 'border-top:1px solid #F0F2F5;' : ''}">
+          <div class="step-num">${i + 1}</div>
+          <div><div class="step-title">${s.title}</div><div class="step-desc">${s.desc}</div></div>
+        </div>`).join('')}
+    </div>
+  </div>
 
-    // Open in new tab — no auto-print, no freeze
-    const blob    = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url     = URL.createObjectURL(blob)
-    const newTab  = window.open()
+  <!-- ── Conversation Transcript ── -->
+  ${convHtml ? `
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon" style="background:#F5F3FF;">💬</div>
+      <div><div class="card-header-title">Discovery Conversation</div><div class="card-header-sub">Full Nova chat session transcript</div></div>
+    </div>
+    <div class="card-body" style="background:#FAFBFC;">${convHtml}</div>
+  </div>` : ''}
+
+  <!-- ── Footer ── -->
+  <div class="footer">
+    <span>DLX_AGENTIC_OS · Deluxe Corporation · Confidential &amp; Internal Use Only</span>
+    <span>Nova Workflow Report · ${date}</span>
+  </div>
+
+</div>
+</body>
+</html>`
+
+    const newTab = window.open()
     if (newTab) {
       newTab.document.open()
       newTab.document.write(html)
       newTab.document.close()
       newTab.document.title = `Nova Report — ${date}`
     }
-    setTimeout(() => URL.revokeObjectURL(url), 2000)
   }
 
   const handleSendToConfluence = () => {
@@ -888,16 +1862,61 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
   }
 
   const handleBuild = (need) => {
-    navigate('/agent-analyst', { state: { prefill: { name: need.label, description: need.detail } } })
+    navigate('/builder', { state: { prefill: { name: need.label, description: need.detail } } })
   }
 
   const handleModify = (need) => {
     const match    = novaResults?.matches?.[need.id]
     const template = match?.agentId ? agentPool.find(a => a.id === match.agentId) : null
     if (template) {
-      navigate('/agent-analyst', { state: { template } })
+      navigate('/builder', { state: { template } })
     } else {
-      navigate('/agent-analyst', { state: { prefill: { name: need.label, description: need.detail } } })
+      navigate('/builder', { state: { prefill: { name: need.label, description: need.detail } } })
+    }
+  }
+
+  const analyzeWorkflow = async (problem) => {
+    if (!problem?.trim()) return
+    setWorkflowLoading(true)
+    try {
+      // Build a rich context from the full conversation — not just the first message.
+      // This gives Nova enough detail to create DISTINCT steps with different agents.
+      const userTurns = messages
+        .filter(m => m.role === 'user')
+        .map(m => m.content)
+        .filter(Boolean)
+      const novaTurns = messages
+        .filter(m => m.role === 'nova')
+        .map(m => m.content)
+        .filter(Boolean)
+
+      // Combine initial problem + every Q&A exchange + the needs analysis summary
+      const conversationContext = [
+        `INITIAL PROBLEM: ${problem}`,
+        userTurns.length > 1
+          ? `\nADDITIONAL CONTEXT FROM CONVERSATION:\n` +
+            userTurns.slice(1).map((u, i) => `User: ${u}`).join('\n')
+          : '',
+        novaSummary ? `\nNOVA ANALYSIS SUMMARY: ${novaSummary}` : '',
+        novaResults?.needs?.length
+          ? `\nIDENTIFIED NEEDS:\n` + novaResults.needs.map(n =>
+              `- ${n.need || n.label}: coverage=${n.coverage || n.status}, note=${n.note || n.detail || ''}`
+            ).join('\n')
+          : '',
+      ].filter(Boolean).join('')
+
+      const res = await fetch('/api/nova/workflow/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problem: conversationContext, session_id: sessionId }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      const data = await res.json()
+      setWorkflowResult(data)
+    } catch (err) {
+      pushMsg('nova', "I couldn't analyse the workflow right now. Please make sure the Nova service is running.")
+    } finally {
+      setWorkflowLoading(false)
     }
   }
 
@@ -907,6 +1926,66 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
     setSessionId(crypto.randomUUID())
     setPhase(0); setMessages([]); setTyping(false); setBuildSugg(null); setInput('')
     setNovaResults(null); setNovaSummary(null); setAnsweredIds(new Set())
+    setWorkflowResult(null)
+    setBuiltSteps({}); setSkippedSteps({}); setSpecModal(null)
+    problemRef.current = ''
+  }
+
+  const handleSendForApproval = () => {
+    if (!workflowResult && !sc) return
+    const chain   = workflowResult?.chain || []
+    const wfName  = (workflowResult?.summary || novaSummary || 'Nova Pipeline').slice(0, 90)
+    const payload = {
+      name:        wfName,
+      agentCount:  chain.length,
+      chain,
+      summary:     workflowResult?.summary || novaSummary || '',
+      sessionId,
+      builtSteps,    // { [idx]: true } — agents built via Velox
+      skippedSteps,  // { [idx]: true } — agents skipped
+    }
+    addPendingWorkflow(payload)
+    addToast({
+      type:    'success',
+      title:   'Workflow sent for approval ✓',
+      message: `"${wfName.slice(0, 50)}…" is pending review on the homepage.`,
+    })
+    setTimeout(() => navigate('/dashboard'), 900)
+  }
+
+  // ── Derived: all build-needed agents are built or skipped ──
+  const _buildNeededIdxs = (workflowResult?.chain || [])
+    .map((step, i) => step.status !== 'full' ? i : -1)
+    .filter(i => i !== -1)
+  const allAgentsConfigured =
+    _buildNeededIdxs.length > 0 &&
+    _buildNeededIdxs.every(i => builtSteps[i] || skippedSteps[i])
+
+  // ── Spec modal handlers ──
+  const handleOpenSpec = (step, index) => setSpecModal({ step, index })
+
+  const handleSkipStep = (index) => {
+    setSkippedSteps(prev => ({ ...prev, [index]: true }))
+  }
+
+  const handleOpenInVelox = (spec) => {
+    if (!specModal) return
+    const stepIndex = specModal.index
+    setSpecModal(null)
+    navigate('/builder', {               // AgentBuilder — has fromWorkflow support
+      state: {
+        fromWorkflow:  true,
+        workflowStep:  stepIndex + 1,    // 1-indexed for display
+        prefill: {
+          name:         spec.name,
+          description:  spec.description,
+          role:         spec.role,
+          systemPrompt: spec.systemPrompt,
+          tools:        spec.tools,
+          suggestion:   spec.tools?.length ? `Recommended tools: ${spec.tools.join(', ')}` : undefined,
+        },
+      },
+    })
   }
 
   const sc = novaResults
@@ -971,6 +2050,19 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
     : []
 
   return (
+    <>
+    {/* ── Agent Spec Modal ── */}
+    <AnimatePresence>
+      {specModal && (
+        <AgentSpecModal
+          step={specModal.step}
+          index={specModal.index}
+          onClose={() => setSpecModal(null)}
+          onOpenInVelox={handleOpenInVelox}
+        />
+      )}
+    </AnimatePresence>
+
     <motion.div
       initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
       className="flex gap-5 h-[calc(100vh-120px)]"
@@ -1075,20 +2167,6 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
                         </button>
                       </div>
 
-                      {/* Skip section — separator + skip button */}
-                      <div className="flex items-center gap-2 pt-0.5">
-                        <div className="flex-1 h-px bg-[#EDF2F7]" />
-                        <button
-                          onClick={() => {
-                            setAnsweredIds(prev => new Set([...prev, msg.id]))
-                            handleQuickFind()
-                          }}
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border border-dashed border-[#C8102E]/30 text-[#C8102E]/70 hover:border-[#C8102E] hover:text-[#C8102E] hover:bg-[#FDF0F2]"
-                        >
-                          <Search size={10} /> skip chat &amp; find agents instantly
-                        </button>
-                        <div className="flex-1 h-px bg-[#EDF2F7]" />
-                      </div>
                     </div>
                   )}
                 </div>
@@ -1107,7 +2185,7 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
                     <p className="text-xs text-[#718096] mb-3">{msg.desc}</p>
                     <div className="flex gap-2">
                       <button
-                        onClick={() => navigate('/agent-analyst', { state: { prefill: { name: msg.suggestion, description: msg.desc } } })}
+                        onClick={() => navigate('/builder', { state: { prefill: { name: msg.suggestion, description: msg.desc } } })}
                         className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold"
                         style={{ background: '#C8102E' }}
                       >
@@ -1206,361 +2284,161 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
             >
               <Send size={15} />
             </button>
+                <button
+                  onClick={() => analyzeWorkflow(input.trim() || (messages.filter(m => m.role === 'user').pop()?.content ?? ''))}
+                  disabled={workflowLoading || (messages.length === 0 && !input.trim())}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold text-white transition-all disabled:opacity-40 whitespace-nowrap"
+                  style={{ background: '#1A2340' }}
+                  title="Analyse and build a complete workflow for this problem"
+                >
+                  {workflowLoading ? <Loader size={12} className="animate-spin" /> : <GitMerge size={12} />}
+                  Build Workflow
+                </button>
           </div>
         </div>
       </div>
 
-      {/* ── RIGHT: Results panel ── */}
-      <div className="flex-1 overflow-y-auto">
-        {phase === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-            className="h-full flex flex-col items-center justify-center text-center p-8"
-          >
-            <div className="w-16 h-16 rounded-2xl bg-[#F7F8FA] border border-[#E2E8F0] flex items-center justify-center mb-4">
-              <Bot size={28} className="text-[#CBD5E0]" />
-            </div>
-            <p className="font-display text-xl font-bold text-[#1A2340] mb-2">Your discovery results will appear here</p>
-            <p className="text-sm text-[#718096] max-w-sm">Start a conversation with Nova. She'll analyze your needs and show you exactly which agents can help — and what to build for the gaps.</p>
-          </motion.div>
-        )}
+      {/* ── RIGHT: Workflow Pipeline panel ── */}
+      <div className="flex-1 flex flex-col card overflow-hidden">
 
-        {phase === 1 && (
-          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="card p-8 flex flex-col items-center justify-center text-center h-48">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span className="text-sm font-semibold text-[#1A2340]">Nova is gathering context</span>
+        {/* Panel header */}
+        <div
+          className="px-5 py-4 border-b border-white/10 flex items-center justify-between flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #1A2340 0%, #2D3A5C 100%)' }}
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+              <GitMerge size={16} className="text-violet-400" />
             </div>
-            <p className="text-xs text-[#718096]">She'll map your business problem to the right agents once she has enough information.</p>
-          </motion.div>
-        )}
+            <div>
+              <p className="text-white font-semibold text-sm">Workflow Pipeline</p>
+              <p className="text-white/40 text-xs">
+                {workflowResult
+                  ? `${workflowResult.chain?.length || 0} agents · Generated by Nova`
+                  : workflowLoading
+                    ? 'Building pipeline…'
+                    : 'Awaiting Nova analysis…'}
+              </p>
+            </div>
+          </div>
+        </div>
 
-        {(phase === 3) && sc && (
-          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-            <div className="card p-5">
-              <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-3">Building Your Needs Profile</p>
-              <div className="flex flex-col gap-2">
-                {sc.needs.map((need, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
-                    <CheckCircle size={14} className="text-emerald-500 flex-shrink-0" />
-                    <p className="text-sm text-[#1A2340] font-medium">{isNewFormat ? need.need : need.label}</p>
-                  </div>
-                ))}
+        {/* Scrollable pipeline content */}
+        <div className="flex-1 overflow-y-auto px-5 py-5">
+
+          {/* Phase 0 — idle */}
+          {phase === 0 && !workflowResult && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="h-full flex flex-col items-center justify-center text-center py-12">
+              <div className="w-14 h-14 rounded-2xl bg-[#F7F8FA] border border-[#E2E8F0] flex items-center justify-center mb-4">
+                <GitMerge size={24} className="text-[#CBD5E0]" />
               </div>
-            </div>
-          </motion.div>
-        )}
+              <p className="text-base font-bold text-[#1A2340] mb-2">Your workflow pipeline appears here</p>
+              <p className="text-xs text-[#718096] max-w-xs leading-relaxed">
+                Once Nova gathers enough context, she'll automatically design a multi-agent pipeline to solve your problem end-to-end.
+              </p>
+            </motion.div>
+          )}
 
-        {phase === 4 && sc && (
-          <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
-            <div className="card p-5">
-              <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-3">Building Your Needs Profile</p>
-              <div className="flex flex-col gap-2">
-                {sc.needs.map((need, i) => (
-                  <div key={i} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
-                    <CheckCircle size={14} className="text-emerald-500 flex-shrink-0" />
-                    <p className="text-sm text-[#1A2340] font-medium">{isNewFormat ? need.need : need.label}</p>
-                  </div>
-                ))}
+          {/* Phase 1 — gathering */}
+          {phase === 1 && !workflowResult && !workflowLoading && (
+            <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+              className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                <span className="text-sm font-semibold text-[#1A2340]">Nova is gathering context…</span>
               </div>
-            </div>
-            <div className="card p-5 flex items-center gap-3">
-              <Loader size={16} className="text-[#C8102E] animate-spin flex-shrink-0" />
-              <p className="text-sm text-[#4A5568]">Scanning agent pool for matches...</p>
-            </div>
-          </motion.div>
-        )}
+              <p className="text-xs text-[#718096] max-w-xs">Answer a few more questions — she'll build your workflow automatically once she has enough information.</p>
+            </motion.div>
+          )}
 
-        {phase >= 5 && sc && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            {/* Summary header */}
-            <div className="card p-5" style={{ borderLeft: '4px solid #C8102E' }}>
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-[#1A2340] leading-relaxed">
-                    {(isNewFormat ? sc.summary : sc.needsTitle)
-                      ?.replace(/\s*[\(\-—]\s*assuming[^).\n]*/gi, '')
-                      ?.replace(/\s*\([^)]*\)/g, '')
-                      ?.trim()}
-                  </p>
-                  <p className="text-xs text-[#9BA8BA] mt-0.5">Requirements gathered by Nova</p>
+          {/* Phases 3–4 — building needs profile */}
+          {(phase === 3 || phase === 4) && sc && !workflowResult && (
+            <motion.div initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} className="space-y-3">
+              <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                <Layers size={11} /> Needs identified — designing pipeline
+              </p>
+              {sc.needs.map((need, i) => (
+                <motion.div
+                  key={i} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.07 }}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]"
+                >
+                  <CheckCircle size={13} className="text-emerald-500 flex-shrink-0" />
+                  <p className="text-sm text-[#1A2340] font-medium">{isNewFormat ? need.need : need.label}</p>
+                </motion.div>
+              ))}
+              {phase === 4 && (
+                <div className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-violet-50 border border-violet-200">
+                  <Loader size={13} className="text-violet-600 animate-spin flex-shrink-0" />
+                  <p className="text-xs text-violet-700 font-medium">Building workflow pipeline…</p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* Export Report */}
-                  <button
-                    onClick={handleDownloadReport}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs font-semibold text-[#4A5568] hover:border-[#C8102E] hover:text-[#C8102E] hover:bg-[#FDF0F2] transition-all"
-                    title="Download full report as PDF"
-                  >
-                    <Download size={12} /> Export Report
-                  </button>
-                  {/* Build Agent from this Doc */}
-                  <button
-                    onClick={handleSendToConfluence}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-white text-xs font-bold shadow-sm hover:opacity-90 active:scale-95 transition-all"
-                    style={{ background: 'linear-gradient(135deg, #7C3AED, #C8102E)' }}
-                    title="Save as Confluence doc and open Agent Analyst to build"
-                  >
-                    Build Agent from this Doc
-                  </button>
-                </div>
-              </div>
-
-              {/* Requirements summary paragraph */}
-              {novaSummary && (
-                <p className="text-sm text-[#4A5568] leading-relaxed mb-4 pb-4 border-b border-[#E2E8F0]">
-                  {novaSummary}
-                </p>
               )}
+            </motion.div>
+          )}
 
-              {/* Agent pool coverage */}
-              <div>
-                <p className="text-xs font-semibold text-[#9BA8BA] uppercase tracking-wider mb-2.5">
-                  Agent Pool Coverage
-                </p>
-                <div className="flex items-center gap-2 flex-wrap mb-2">
-                  <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700">
-                    <CheckCircle size={12} className="text-emerald-500" />
-                    {solvedCount} fully solved
-                  </span>
-                  <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-xs font-semibold text-amber-700">
-                    <AlertCircle size={12} className="text-amber-500" />
-                    {partialCount} partial match
-                  </span>
-                  <span className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-red-50 border border-red-200 text-xs font-semibold text-red-600">
-                    <XCircle size={12} className="text-red-400" />
-                    {unsolvedCount} gap{unsolvedCount !== 1 ? 's' : ''} to build
-                  </span>
-                </div>
-                <p className="text-xs text-[#718096] leading-relaxed">
-                  {Object.keys(agentGroups).length > 0
-                    ? `${Object.keys(agentGroups).length} agent${Object.keys(agentGroups).length !== 1 ? 's' : ''} from the pool address${Object.keys(agentGroups).length === 1 ? 'es' : ''} ${solvedCount + partialCount} of your ${sc.needs?.length || 5} requirements — ${unsolvedCount > 0 ? `${unsolvedCount} need${unsolvedCount !== 1 ? 's' : ''} require a new agent to be built` : 'all needs are covered'}.`
-                    : `No agents in the current pool match your requirements — ${unsolvedCount} new agent${unsolvedCount !== 1 ? 's' : ''} need to be built.`
-                  }
-                </p>
-              </div>
-            </div>
-
-            {/* Recommended agents — grouped by agent, hover=flowchart, click=detail */}
-            {Object.keys(agentGroups).length > 0 && (
-              <div className="space-y-3">
-                <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider flex items-center gap-1.5">
-                  <Bot size={11} /> Recommended Agents — hover to map, click to expand
-                </p>
-                {Object.entries(agentGroups).map(([agentName, group]) => (
-                  <AgentRecommendationCard
-                    key={agentName}
-                    agentName={agentName}
-                    agentId={group.agentId}
-                    segment={group.segment}
-                    solvedNeeds={group.solved}
-                    partialNeeds={group.partial}
-                    navigate={navigate}
-                    agentPool={agentPool}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* Unsolved — no matching agent → build from scratch */}
-            {unsolvedNeeds.length > 0 && (
-              <div className="card p-4">
-                <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                  <XCircle size={11} className="text-red-400" /> No agent match — {unsolvedNeeds.length} gap{unsolvedNeeds.length > 1 ? 's' : ''}
-                </p>
-                <div className="space-y-2">
-                  {unsolvedNeeds.map(need => (
-                    <div key={need.id} className="flex items-start gap-3 p-3 rounded-xl bg-[#FEF2F2] border border-[#FECACA]">
-                      <XCircle size={13} className="text-red-400 mt-0.5 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs font-semibold text-[#1A2340]">{need.label}</p>
-                        <p className="text-xs text-[#718096] mt-0.5 leading-relaxed">{need.detail}</p>
-                        <button
-                          onClick={() => navigate('/agent-analyst', { state: { prefill: { name: need.label, description: need.detail } } })}
-                          className="mt-2 flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition-all hover:opacity-90"
-                          style={{ background: 'linear-gradient(135deg, #1A2340, #2D3A5C)' }}
-                        >
-                          <Terminal size={11} />
-                          Build from scratch
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+          {/* Loading — workflow analysis in progress */}
+          {workflowLoading && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-16 gap-3">
+              <div className="relative w-14 h-14">
+                <div className="absolute inset-0 rounded-full border-4 border-[#1A2340]/10" />
+                <div className="absolute inset-0 rounded-full border-4 border-[#C8102E] border-t-transparent animate-spin" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <GitMerge size={18} className="text-[#C8102E]" />
                 </div>
               </div>
-            )}
+              <p className="text-sm font-bold text-[#1A2340]">Designing your pipeline…</p>
+              <p className="text-xs text-[#9BA8BA]">Nova is chaining agents to solve your problem</p>
+            </motion.div>
+          )}
 
-            {/* Build suggestion banner */}
-            {buildSugg && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                className="card p-5 border-amber-200 bg-amber-50"
+          {/* ✅ Main: Workflow pipeline view */}
+          {!workflowLoading && workflowResult && (
+            <WorkflowPipelineView
+              result={workflowResult}
+              navigate={navigate}
+              builtSteps={builtSteps}
+              skippedSteps={skippedSteps}
+              onOpenSpec={handleOpenSpec}
+              onSkip={handleSkipStep}
+              onSubmitWorkflow={handleSendForApproval}
+            />
+          )}
+
+          {/* Phase 5 — analysis done but no workflow yet (prompt to trigger) */}
+          {phase >= 5 && sc && !workflowResult && !workflowLoading && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-10">
+              <div className="w-12 h-12 rounded-2xl bg-violet-50 border border-violet-200 flex items-center justify-center mx-auto mb-3">
+                <GitMerge size={20} className="text-violet-500" />
+              </div>
+              <p className="text-sm font-semibold text-[#1A2340] mb-1">Analysis complete</p>
+              <p className="text-xs text-[#718096] mb-4">Click to generate the full multi-agent workflow pipeline</p>
+              <button
+                onClick={() => analyzeWorkflow(problemRef.current || messages.find(m => m.role === 'user')?.content || '')}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white mx-auto transition-all hover:opacity-90"
+                style={{ background: 'linear-gradient(135deg,#1A2340,#2D3A5C)' }}
               >
-                <div className="flex items-start gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-                    <Lightbulb size={17} className="text-amber-600" />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[#1A2340]">
-                      Suggested: {isNewFormat ? sc.build_recommendation?.split(' — ')[0] : sc.buildSuggestion}
-                    </p>
-                    <p className="text-xs text-[#718096] mt-1 leading-relaxed">
-                      {(isNewFormat ? sc.build_recommendation?.split(' — ').slice(1).join(' — ') : sc.buildDesc)
-                        ?.replace(/\s*[\(\-—]\s*assuming[^).\n]*/gi, '')
-                        ?.replace(/\s*\([^)]*\)/g, '')
-                        ?.trim()}
-                    </p>
-                    <div className="mt-3 flex items-center gap-2 flex-wrap">
-                      {/* Preview & Edit toggle */}
-                      <button
-                        onClick={() => {
-                          const name = isNewFormat ? sc.build_recommendation?.split(' — ')[0] : sc.buildSuggestion
+                <GitMerge size={14} /> Build Workflow Pipeline
+              </button>
+            </motion.div>
+          )}
+        </div>
 
-                          // Try split first, fallback to full recommendation, then summary
-                          const splitDesc = isNewFormat
-                            ? sc.build_recommendation?.split(' — ').slice(1).join(' — ')
-                            : sc.buildDesc
-                          const desc = (splitDesc?.trim()
-                            || sc.build_recommendation
-                            || sc.summary
-                            || '')
-                            .replace(/\s*[\(\-—]\s*assuming[^).\n]*/gi, '')
-                            .replace(/\s*\([^)]*\)/g, '')
-                            .trim()
-
-                          const sysp = `You are ${name}, an AI agent deployed by Deluxe Corporation on the DLX_AGENTIC_OS platform.\n\nPURPOSE: ${desc}\n\nGUARDRAILS:\n  - Never take irreversible actions without human approval\n  - Log every action with timestamp and rationale\n  - Escalate exceptions to the appropriate team immediately\n\nSOURCE: Generated from Nova suggestion in Imagination Studio`
-                          setDocTitle(name || 'Nova Suggested Agent')
-                          setDocDesc(desc)
-                          setDocSysP(sysp)
-                          setShowDocPreview(p => !p)
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all"
-                        style={{ borderColor: '#7C3AED', color: '#7C3AED', background: '#F5F3FF' }}
-                      >
-                        <FileText size={11} /> {showDocPreview ? 'Hide Preview' : 'Preview & Edit Doc'}
-                      </button>
-
-                      {/* Make Document & Build Agent */}
-                      <button
-                        onClick={() => {
-                          const name = docTitle || (isNewFormat ? sc.build_recommendation?.split(' — ')[0] : sc.buildSuggestion)
-                          const desc = docDesc || ''
-                          const sysp = docSysP || ''
-                          const page = {
-                            id: `nova-sugg-${Date.now()}`,
-                            title: name,
-                            space: 'Imagination Studio',
-                            updated: 'just now',
-                            fromNova: true,
-                            content: { description: desc, systemPrompt: sysp },
-                          }
-                          addConfluencePage(page)
-                          addToast({ type: 'success', title: 'Document created', message: 'Opening Agent Analyst…' })
-                          setTimeout(() => navigate('/agent-analyst'), 800)
-                        }}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all hover:opacity-90"
-                        style={{ background: 'linear-gradient(135deg,#7C3AED,#C8102E)' }}
-                      >
-                        Make Document &amp; Build Agent
-                      </button>
-                    </div>
-
-                    {/* Inline editable doc preview */}
-                    {showDocPreview && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}
-                        className="mt-4 rounded-2xl overflow-hidden shadow-sm"
-                        style={{ border: '1px solid #E9D5FF', background: '#fff' }}
-                      >
-                        {/* Doc header bar */}
-                        <div className="flex items-center justify-between px-5 py-3"
-                          style={{ background: 'linear-gradient(135deg,#7C3AED,#6D28D9)', borderBottom: '1px solid #6D28D9' }}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-md bg-white/20 flex items-center justify-center">
-                              <FileText size={13} className="text-white" />
-                            </div>
-                            <span className="text-xs font-bold text-white tracking-wide">Confluence Document</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/20 text-white">Draft</span>
-                            <span className="text-[10px] text-white/60">Imagination Studio · just now</span>
-                          </div>
-                        </div>
-
-                        {/* Doc body — paper-like */}
-                        <div className="p-5 space-y-5" style={{ background: '#FAFAFA' }}>
-
-                          {/* Agent Name — big title input */}
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest mb-1.5" style={{ color: '#7C3AED' }}>
-                              Agent Name
-                            </p>
-                            <input
-                              value={docTitle}
-                              onChange={e => setDocTitle(e.target.value)}
-                              className="w-full bg-transparent border-0 border-b-2 text-lg font-bold text-gray-900 focus:outline-none pb-1"
-                              style={{ borderColor: '#E9D5FF' }}
-                              onFocus={e => e.target.style.borderColor = '#7C3AED'}
-                              onBlur={e => e.target.style.borderColor = '#E9D5FF'}
-                            />
-                          </div>
-
-                          {/* Divider */}
-                          <div className="h-px" style={{ background: '#F3E8FF' }} />
-
-                          {/* Description */}
-                          <div>
-                            <p className="text-[10px] font-bold uppercase tracking-widest mb-2" style={{ color: '#7C3AED' }}>
-                              Description
-                            </p>
-                            <textarea
-                              value={docDesc}
-                              onChange={e => setDocDesc(e.target.value)}
-                              rows={3}
-                              placeholder="Describe what this agent does..."
-                              className="w-full bg-white rounded-xl border px-4 py-3 text-sm text-gray-700 leading-relaxed focus:outline-none resize-none"
-                              style={{ borderColor: '#E9D5FF' }}
-                              onFocus={e => e.target.style.borderColor = '#7C3AED'}
-                              onBlur={e => e.target.style.borderColor = '#E9D5FF'}
-                            />
-                          </div>
-
-                          {/* System Prompt */}
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: '#7C3AED' }}>
-                                System Prompt
-                              </p>
-                              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full"
-                                style={{ background: '#F3E8FF', color: '#7C3AED' }}>
-                                {docSysP.length} chars
-                              </span>
-                            </div>
-                            <textarea
-                              value={docSysP}
-                              onChange={e => setDocSysP(e.target.value)}
-                              rows={9}
-                              className="w-full bg-white rounded-xl border px-4 py-3 text-xs font-mono text-gray-700 leading-relaxed focus:outline-none resize-none"
-                              style={{ borderColor: '#E9D5FF' }}
-                              onFocus={e => e.target.style.borderColor = '#7C3AED'}
-                              onBlur={e => e.target.style.borderColor = '#E9D5FF'}
-                            />
-                          </div>
-
-                          {/* Footer note */}
-                          <p className="text-[10px] text-gray-400 text-center">
-                            ✏️ Edit above then click <strong>Make Document &amp; Build Agent</strong> to save
-                          </p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </motion.div>
+        {/* Sticky footer — Export Report only */}
+        {workflowResult && (
+          <div className="px-5 py-4 border-t border-[#E2E8F0] flex-shrink-0"
+            style={{ background: '#F7F8FA' }}>
+            <button
+              onClick={handleDownloadReport}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#4A5568] bg-white hover:bg-[#F0F4FF] hover:border-[#C7D2FE] transition-all"
+            >
+              <Download size={14} /> Export Report
+            </button>
+          </div>
         )}
       </div>
     </motion.div>
+    </>
   )
 }

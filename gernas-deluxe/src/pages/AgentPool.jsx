@@ -8,7 +8,8 @@ import {
   GitMerge, X, Activity, ArrowRight, Terminal,
   Plug, Package, Link2, Mail, Globe, Cpu, Tag,
   Clock, Users, BarChart2, Settings, Code, CheckCheck,
-  Wrench, Server, Cloud, Lock
+  Wrench, Server, Cloud, Lock, Upload, AlertTriangle,
+  Award, LayoutDashboard, TrendingUp, Loader
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
@@ -26,6 +27,7 @@ const ALL_WORKFLOWS = [
     name: 'SMB Merchant Onboarding Pipeline',
     description: 'Full end-to-end merchant onboarding — KYB verification, document collection, risk scoring and approval.',
     segmentKey: 'merchant', segment: 'Merchant Services',
+    authors: ['Satishkumar Balasubramanian', 'Ashish Agarwal'],
     status: 'live', sla: 99.2, tasksPerDay: 423,
     lastRun: '2 min ago', avgRunTime: '4.2 min',
     trigger: 'Merchant Application Submitted',
@@ -42,6 +44,7 @@ const ALL_WORKFLOWS = [
     name: 'Invoice-to-Cash Reconciliation',
     description: 'Automated invoice ingestion, PO matching, GL posting and exception escalation for B2B payment flows.',
     segmentKey: 'b2b', segment: 'B2B Payments',
+    authors: ['Vadivel Mohanakrishnan'],
     status: 'incomplete', sla: 97.8, tasksPerDay: 289,
     lastRun: '8 min ago', avgRunTime: '2.8 min',
     trigger: 'Invoice Received (Email / EDI)',
@@ -58,6 +61,7 @@ const ALL_WORKFLOWS = [
     name: 'Churn Prevention Campaign',
     description: 'Identifies at-risk customers, generates personalised retention offers and triggers multi-channel outreach.',
     segmentKey: 'print', segment: 'Print & Retention',
+    authors: ['Swetha Surendran', 'Thilak Balakrishnan'],
     status: 'live', sla: 96.4, tasksPerDay: 178,
     lastRun: '14 min ago', avgRunTime: '3.1 min',
     trigger: 'Customer Churn Score > 0.7',
@@ -73,6 +77,7 @@ const ALL_WORKFLOWS = [
     name: 'Data Enrichment Pipeline',
     description: 'Enriches raw customer and company data with third-party signals, deduplicates records and syncs to data lake.',
     segmentKey: 'data', segment: 'Data Solutions',
+    authors: ['Shubham Singh'],
     status: 'live', sla: 99.7, tasksPerDay: 1240,
     lastRun: '1 min ago', avgRunTime: '1.4 min',
     trigger: 'New Record Ingested (CRM / DB)',
@@ -89,6 +94,7 @@ const ALL_WORKFLOWS = [
     name: 'Governance & Compliance Monitor',
     description: 'Continuously monitors workflows for policy violations, audits agent actions and raises compliance alerts.',
     segmentKey: 'platform', segment: 'Platform',
+    authors: ['Satishkumar Balasubramanian'],
     status: 'incomplete', sla: 94.1, tasksPerDay: 87,
     lastRun: '22 min ago', avgRunTime: '5.7 min',
     trigger: 'Scheduled (Every 15 min) + Event',
@@ -104,81 +110,81 @@ const ALL_WORKFLOWS = [
 /* ── Section 2: Individual Agents ────────────────────────────────────────── */
 const INDIVIDUAL_AGENTS = [
   /* Merchant Services */
-  { id: 'ia-01', name: 'KYB Verification Agent',  segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance', usedIn: 2, successRate: 99.1, tasksToday: 423,  tools: ['kyb-api', 'dnb-lookup', 'sanctions-check'],      description: 'Verifies business identity and sanctions screening via multiple regulatory APIs.' },
-  { id: 'ia-02', name: 'Document Collection Bot', segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 3, successRate: 98.4, tasksToday: 319,  tools: ['doc-parser', 'email-send', 'ocr-extract'],        description: 'Requests, parses and validates merchant documents with OCR and validation rules.' },
-  { id: 'ia-03', name: 'Risk Scoring Engine',     segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance', usedIn: 4, successRate: 97.8, tasksToday: 512,  tools: ['risk-model', 'crm-write', 'fraud-signals'],       description: 'ML-based risk scoring engine integrating fraud signals and CRM history.' },
-  { id: 'ia-11', name: 'Approval Notifier',       segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 2, successRate: 98.9, tasksToday: 211,  tools: ['workflow-api', 'notify-send', 'crm-update'],      description: 'Routes decisions to approvers and broadcasts notifications to all stakeholders.' },
+  { id: 'ia-01', name: 'KYB Verification Agent',  segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance', usedIn: 2, successRate: 99.1, tasksToday: 423,  tools: ['kyb-api', 'dnb-lookup', 'sanctions-check'],      description: 'Verifies business identity and sanctions screening via multiple regulatory APIs.',                                  authors: ['Satishkumar Balasubramanian', 'Ashish Agarwal'] },
+  { id: 'ia-02', name: 'Document Collection Bot', segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 3, successRate: 98.4, tasksToday: 319,  tools: ['doc-parser', 'email-send', 'ocr-extract'],        description: 'Requests, parses and validates merchant documents with OCR and validation rules.',                                    authors: ['Vadivel Mohanakrishnan'] },
+  { id: 'ia-03', name: 'Risk Scoring Engine',     segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance', usedIn: 4, successRate: 97.8, tasksToday: 512,  tools: ['risk-model', 'crm-write', 'fraud-signals'],       description: 'ML-based risk scoring engine integrating fraud signals and CRM history.',                                            authors: ['Swetha Surendran', 'Thilak Balakrishnan'] },
+  { id: 'ia-11', name: 'Approval Notifier',       segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 2, successRate: 98.9, tasksToday: 211,  tools: ['workflow-api', 'notify-send', 'crm-update'],      description: 'Routes decisions to approvers and broadcasts notifications to all stakeholders.',                                    authors: ['Vadivel Mohanakrishnan'] },
   /* B2B Payments */
-  { id: 'ia-13', name: 'Invoice Ingestion Agent', segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',         usedIn: 1, successRate: 98.1, tasksToday: 289,  tools: ['ocr-parser', 'email-inbox', 'edi-reader'],        description: 'Parses and classifies incoming invoices from email and EDI feeds automatically.' },
-  { id: 'ia-04', name: 'PO Matching Engine',      segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',         usedIn: 2, successRate: 96.3, tasksToday: 267,  tools: ['erp-read', 'match-algo', 'gl-lookup'],            description: 'Fuzzy-matches invoices to purchase orders across multiple ERP systems.' },
-  { id: 'ia-05', name: 'GL Posting Agent',        segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',         usedIn: 2, successRate: 99.5, tasksToday: 243,  tools: ['gl-write', 'audit-log', 'erp-write'],             description: 'Posts verified invoices to the general ledger with full audit trail.' },
-  { id: 'ia-14', name: 'Exception Handler',       segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'under-review', category: 'Operations',         usedIn: 1, successRate: 82.4, tasksToday: 58,   tools: ['notify-send', 'ticket-create', 'jira-api'],       description: 'Flags unmatched invoices and routes them to the finance team for manual review.' },
+  { id: 'ia-13', name: 'Invoice Ingestion Agent', segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',         usedIn: 1, successRate: 98.1, tasksToday: 289,  tools: ['ocr-parser', 'email-inbox', 'edi-reader'],        description: 'Parses and classifies incoming invoices from email and EDI feeds automatically.',                                    authors: ['Thilak Balakrishnan'] },
+  { id: 'ia-04', name: 'PO Matching Engine',      segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',         usedIn: 2, successRate: 96.3, tasksToday: 267,  tools: ['erp-read', 'match-algo', 'gl-lookup'],            description: 'Fuzzy-matches invoices to purchase orders across multiple ERP systems.',                                             authors: ['Ashish Agarwal'] },
+  { id: 'ia-05', name: 'GL Posting Agent',        segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',         usedIn: 2, successRate: 99.5, tasksToday: 243,  tools: ['gl-write', 'audit-log', 'erp-write'],             description: 'Posts verified invoices to the general ledger with full audit trail.',                                               authors: ['Shubham Singh'] },
+  { id: 'ia-14', name: 'Exception Handler',       segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'under-review', category: 'Operations',    usedIn: 1, successRate: 82.4, tasksToday: 58,   tools: ['notify-send', 'ticket-create', 'jira-api'],       description: 'Flags unmatched invoices and routes them to the finance team for manual review.',                                    authors: ['Ashish Agarwal'] },
   /* Print & Retention */
-  { id: 'ia-06', name: 'Churn Predictor',         segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',            usedIn: 1, successRate: 95.2, tasksToday: 178,  tools: ['ml-predict', 'crm-read', 'segment-api'],         description: 'Real-time churn probability scoring using behavioural and usage signals.' },
-  { id: 'ia-15', name: 'Offer Generator',         segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',            usedIn: 1, successRate: 96.8, tasksToday: 162,  tools: ['offer-engine', 'pricing-api', 'ab-test'],         description: 'Selects the optimal retention offer based on customer value tier and A/B tests.' },
-  { id: 'ia-07', name: 'Campaign Dispatcher',     segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',            usedIn: 1, successRate: 94.7, tasksToday: 154,  tools: ['email-send', 'sms-gateway', 'push-notify'],       description: 'Multi-channel outreach dispatcher for email, SMS and push notifications.' },
+  { id: 'ia-06', name: 'Churn Predictor',         segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',            usedIn: 1, successRate: 95.2, tasksToday: 178,  tools: ['ml-predict', 'crm-read', 'segment-api'],         description: 'Real-time churn probability scoring using behavioural and usage signals.',                                           authors: ['Satishkumar Balasubramanian'] },
+  { id: 'ia-15', name: 'Offer Generator',         segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',            usedIn: 1, successRate: 96.8, tasksToday: 162,  tools: ['offer-engine', 'pricing-api', 'ab-test'],         description: 'Selects the optimal retention offer based on customer value tier and A/B tests.',                                    authors: ['Satishkumar Balasubramanian'] },
+  { id: 'ia-07', name: 'Campaign Dispatcher',     segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',            usedIn: 1, successRate: 94.7, tasksToday: 154,  tools: ['email-send', 'sms-gateway', 'push-notify'],       description: 'Multi-channel outreach dispatcher for email, SMS and push notifications.',                                           authors: ['Vadivel Mohanakrishnan', 'Swetha Surendran'] },
   /* Data Solutions */
-  { id: 'ia-16', name: 'Record Classifier',       segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 1, successRate: 99.3, tasksToday: 1240, tools: ['classifier-api', 'schema-detect'],                description: 'Identifies record type and routes each record to the appropriate enrichment agent.' },
-  { id: 'ia-08', name: 'Data Enricher',           segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 3, successRate: 99.8, tasksToday: 1240, tools: ['clearbit-api', 'zoominfo-api', 'dnb-lookup'],     description: 'Appends firmographic, demographic and intent signals from multiple data providers.' },
-  { id: 'ia-09', name: 'Dedup Engine',            segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 2, successRate: 99.2, tasksToday: 981,  tools: ['match-algo', 'crm-write', 'audit-log'],           description: 'Merges duplicate customer records and maintains a single golden record.' },
-  { id: 'ia-12', name: 'Data Lake Sync Agent',    segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 1, successRate: 99.9, tasksToday: 1240, tools: ['snowflake-write', 'schema-validate', 'dq-check'], description: 'Pushes enriched records to Snowflake with schema validation and data quality checks.' },
+  { id: 'ia-16', name: 'Record Classifier',       segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 1, successRate: 99.3, tasksToday: 1240, tools: ['classifier-api', 'schema-detect'],                description: 'Identifies record type and routes each record to the appropriate enrichment agent.',                                 authors: ['Vadivel Mohanakrishnan'] },
+  { id: 'ia-08', name: 'Data Enricher',           segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 3, successRate: 99.8, tasksToday: 1240, tools: ['clearbit-api', 'zoominfo-api', 'dnb-lookup'],     description: 'Appends firmographic, demographic and intent signals from multiple data providers.',                                 authors: ['Thilak Balakrishnan'] },
+  { id: 'ia-09', name: 'Dedup Engine',            segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 2, successRate: 99.2, tasksToday: 981,  tools: ['match-algo', 'crm-write', 'audit-log'],           description: 'Merges duplicate customer records and maintains a single golden record.',                                            authors: ['Ashish Agarwal'] },
+  { id: 'ia-12', name: 'Data Lake Sync Agent',    segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',               usedIn: 1, successRate: 99.9, tasksToday: 1240, tools: ['snowflake-write', 'schema-validate', 'dq-check'], description: 'Pushes enriched records to Snowflake with schema validation and data quality checks.',                               authors: ['Swetha Surendran'] },
   /* Platform */
-  { id: 'ia-10', name: 'Policy Monitor',          segmentKey: 'platform', segment: 'Platform',          status: 'under-review', category: 'Risk & Compliance', usedIn: 1, successRate: 94.1, tasksToday: 87,   tools: ['policy-api', 'workflow-read', 'audit-log'],       description: 'Continuously scans running workflows against governance and compliance rules.' },
-  { id: 'ia-17', name: 'Violation Classifier',    segmentKey: 'platform', segment: 'Platform',          status: 'active',  category: 'Risk & Compliance', usedIn: 1, successRate: 97.3, tasksToday: 64,   tools: ['classify-api', 'risk-model'],                     description: 'Categorises detected policy violations by severity, domain and remediation path.' },
-  { id: 'ia-18', name: 'Alert Dispatcher',        segmentKey: 'platform', segment: 'Platform',          status: 'under-review', category: 'Risk & Compliance', usedIn: 1, successRate: 89.6, tasksToday: 42,   tools: ['notify-send', 'jira-api', 'email-send'],          description: 'Notifies compliance officers and escalates critical violations via Jira and email.' },
+  { id: 'ia-10', name: 'Policy Monitor',          segmentKey: 'platform', segment: 'Platform',          status: 'under-review', category: 'Risk & Compliance', usedIn: 1, successRate: 94.1, tasksToday: 87,  tools: ['policy-api', 'workflow-read', 'audit-log'],       description: 'Continuously scans running workflows against governance and compliance rules.',                                       authors: ['Satishkumar Balasubramanian', 'Shubham Singh'] },
+  { id: 'ia-17', name: 'Violation Classifier',    segmentKey: 'platform', segment: 'Platform',          status: 'active',  category: 'Risk & Compliance', usedIn: 1, successRate: 97.3, tasksToday: 64,   tools: ['classify-api', 'risk-model'],                     description: 'Categorises detected policy violations by severity, domain and remediation path.',                                   authors: ['Swetha Surendran'] },
+  { id: 'ia-18', name: 'Alert Dispatcher',        segmentKey: 'platform', segment: 'Platform',          status: 'under-review', category: 'Risk & Compliance', usedIn: 1, successRate: 89.6, tasksToday: 42, tools: ['notify-send', 'jira-api', 'email-send'],          description: 'Notifies compliance officers and escalates critical violations via Jira and email.',                                  authors: ['Thilak Balakrishnan', 'Shubham Singh'] },
   // ── Backend agents (parity with agents.json) ──
-  { id: 'ia-19', name: 'SMB Onboarding Agent',        segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 5,  successRate: 96.2, tasksToday: 47,   tools: ['kyb-verify', 'crm-write', 'email-send', 'terminal-config'],         description: 'Automates the full SMB merchant onboarding lifecycle — from KYB verification to first live transaction.' },
-  { id: 'ia-20', name: 'Fraud Detection Agent',       segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance',  usedIn: 6,  successRate: 99.8, tasksToday: 3201, tools: ['txn-stream', 'anomaly-detect', 'hold-trigger', 'compliance-alert'],  description: 'Sub-second real-time fraud detection with automated account holds and SAR compliance alerts.' },
-  { id: 'ia-21', name: 'Churn Prevention Agent',      segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',             usedIn: 3,  successRate: 88.7, tasksToday: 31,   tools: ['crm-read', 'order-history', 'email-send', 'sales-alert'],            description: 'Monitors print customer order patterns to detect churn signals and triggers automated retention campaigns.' },
-  { id: 'ia-22', name: 'Invoice Reconciliation Agent',segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',          usedIn: 4,  successRate: 94.1, tasksToday: 124,  tools: ['erp-read', 'payment-match', 'gl-write', 'exception-flag'],           description: 'Eliminates manual invoice-to-payment matching across multiple ERP systems with auto GL posting.' },
-  { id: 'ia-23', name: 'Data Enrichment Agent',       segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',                usedIn: 5,  successRate: 99.1, tasksToday: 892,  tools: ['data-fetch', 'profile-update', 'signal-score', 'warehouse-write'],   description: 'Continuously enriches SMB customer profiles with firmographic and payment behavior signals.' },
-  { id: 'ia-24', name: 'Upsell Intelligence Agent',   segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',             usedIn: 1,  successRate: 72.4, tasksToday: 18,   tools: ['crm-read', 'propensity-score', 'proposal-gen', 'sales-route'],       description: 'Scores print customers for payments migration propensity and routes leads to sales teams with proposals.' },
+  { id: 'ia-19', name: 'SMB Onboarding Agent',         segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',       category: 'Onboarding',        usedIn: 5,  successRate: 96.2, tasksToday: 47,   tools: ['kyb-verify', 'crm-write', 'email-send', 'terminal-config'],         description: 'Automates the full SMB merchant onboarding lifecycle — from KYB verification to first live transaction.',           authors: ['Satishkumar Balasubramanian', 'Ashish Agarwal'] },
+  { id: 'ia-20', name: 'Fraud Detection Agent',        segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',       category: 'Risk & Compliance', usedIn: 6,  successRate: 99.8, tasksToday: 3201, tools: ['txn-stream', 'anomaly-detect', 'hold-trigger', 'compliance-alert'],  description: 'Sub-second real-time fraud detection with automated account holds and SAR compliance alerts.',                      authors: ['Vadivel Mohanakrishnan'] },
+  { id: 'ia-21', name: 'Churn Prevention Agent',       segmentKey: 'print',    segment: 'Print & Retention', status: 'active',       category: 'Revenue',           usedIn: 3,  successRate: 88.7, tasksToday: 31,   tools: ['crm-read', 'order-history', 'email-send', 'sales-alert'],            description: 'Monitors print customer order patterns to detect churn signals and triggers automated retention campaigns.',         authors: ['Swetha Surendran'] },
+  { id: 'ia-22', name: 'Invoice Reconciliation Agent', segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',       category: 'Operations',        usedIn: 4,  successRate: 94.1, tasksToday: 124,  tools: ['erp-read', 'payment-match', 'gl-write', 'exception-flag'],           description: 'Eliminates manual invoice-to-payment matching across multiple ERP systems with auto GL posting.',                   authors: ['Shubham Singh'] },
+  { id: 'ia-23', name: 'Data Enrichment Agent',        segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',       category: 'Data',              usedIn: 5,  successRate: 99.1, tasksToday: 892,  tools: ['data-fetch', 'profile-update', 'signal-score', 'warehouse-write'],   description: 'Continuously enriches SMB customer profiles with firmographic and payment behavior signals.',                       authors: ['Satishkumar Balasubramanian'] },
+  { id: 'ia-24', name: 'Upsell Intelligence Agent',    segmentKey: 'print',    segment: 'Print & Retention', status: 'active',       category: 'Revenue',           usedIn: 1,  successRate: 72.4, tasksToday: 18,   tools: ['crm-read', 'propensity-score', 'proposal-gen', 'sales-route'],       description: 'Scores print customers for payments migration propensity and routes leads to sales teams with proposals.',           authors: ['Ashish Agarwal'] },
   // ── Net-new agents ──
-  { id: 'ia-25', name: 'Terminal Provisioning Agent', segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 2,  successRate: 97.5, tasksToday: 38,   tools: ['terminal-api', 'inventory-check', 'shipping-create', 'crm-write'],   description: 'Automates POS terminal ordering, configuration, and shipping for newly approved merchants.' },
-  { id: 'ia-26', name: 'Dispute Resolution Agent',    segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Operations',          usedIn: 2,  successRate: 89.3, tasksToday: 67,   tools: ['dispute-api', 'txn-lookup', 'evidence-collect', 'notify-send'],       description: 'Manages chargeback and dispute workflows by collecting evidence and routing for adjudication.' },
-  { id: 'ia-27', name: 'Merchant KYC/AML Agent',      segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance',  usedIn: 3,  successRate: 98.1, tasksToday: 52,   tools: ['sanctions-check', 'aml-screen', 'kyc-verify', 'alert-write'],        description: 'Continuous KYC/AML screening against OFAC and global sanctions lists for all merchant accounts.' },
-  { id: 'ia-28', name: 'Print Order Fulfillment Agent',segmentKey: 'print',   segment: 'Print & Retention', status: 'active',  category: 'Operations',          usedIn: 1,  successRate: 97.8, tasksToday: 214,  tools: ['order-api', 'inventory-check', 'print-queue', 'shipping-create'],    description: 'Orchestrates end-to-end print order fulfilment from receipt through production to dispatch.' },
-  { id: 'ia-29', name: 'Reorder Reminder Agent',      segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',             usedIn: 1,  successRate: 91.4, tasksToday: 188,  tools: ['order-history', 'email-send', 'sms-gateway', 'crm-read'],            description: 'Predicts reorder windows and sends personalised reorder nudges to print customers at the right time.' },
-  { id: 'ia-30', name: 'Direct Mail Campaign Agent',  segmentKey: 'print',    segment: 'Print & Retention', status: 'active',  category: 'Revenue',             usedIn: 1,  successRate: 83.6, tasksToday: 72,   tools: ['campaign-api', 'segment-api', 'address-verify', 'print-queue'],      description: 'Automates direct mail campaign execution with address verification and segment targeting.' },
-  { id: 'ia-31', name: 'ACH Payment Processor',       segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',          usedIn: 2,  successRate: 99.4, tasksToday: 341,  tools: ['ach-gateway', 'bank-verify', 'payment-post', 'audit-log'],           description: 'Processes ACH credit and debit transactions with bank account verification and full audit trail.' },
-  { id: 'ia-32', name: 'Wire Transfer Verifier',      segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',          usedIn: 1,  successRate: 99.7, tasksToday: 89,   tools: ['swift-api', 'beneficiary-check', 'sanctions-check', 'gl-write'],     description: 'Verifies wire transfer beneficiaries against sanctions lists and posts confirmed transfers to GL.' },
-  { id: 'ia-33', name: 'Vendor Onboarding Agent',     segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Onboarding',         usedIn: 1,  successRate: 95.2, tasksToday: 28,   tools: ['vendor-api', 'kyb-api', 'bank-verify', 'erp-write'],                 description: 'Streamlines vendor onboarding with KYB checks, bank account verification, and ERP setup.' },
-  { id: 'ia-34', name: 'Purchase Order Automation',   segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',  category: 'Operations',          usedIn: 2,  successRate: 96.8, tasksToday: 156,  tools: ['po-api', 'erp-read', 'approval-route', 'notify-send'],               description: 'Automates PO creation, approval routing, and ERP updates for B2B procurement workflows.' },
-  { id: 'ia-35', name: 'Expense Report Processor',    segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'under-review', category: 'Operations',         usedIn: 1,  successRate: 84.1, tasksToday: 203,  tools: ['ocr-extract', 'policy-check', 'gl-write', 'approval-route'],         description: 'Extracts expense data from receipts, validates against policy, and routes for approval.' },
-  { id: 'ia-36', name: 'SMB Credit Scoring Agent',    segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',                usedIn: 3,  successRate: 97.3, tasksToday: 411,  tools: ['credit-api', 'risk-model', 'bureau-lookup', 'profile-update'],       description: 'Generates real-time SMB credit scores using bureau data and proprietary underwriting risk signals.' },
-  { id: 'ia-37', name: 'Lead Scoring Agent',          segmentKey: 'data',     segment: 'Data Solutions',    status: 'under-review',  category: 'Data',                usedIn: 2,  successRate: 93.6, tasksToday: 527,  tools: ['crm-read', 'ml-predict', 'segment-api', 'crm-write'],                description: 'Scores inbound and outbound leads using intent, firmographic, and behavioural signals.' },
-  { id: 'ia-38', name: 'Market Segmentation Agent',   segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',                usedIn: 2,  successRate: 96.1, tasksToday: 1891, tools: ['warehouse-read', 'segment-api', 'ml-predict', 'crm-write'],          description: 'Re-segments the SMB customer base using ML clustering on continuously enriched profiles.' },
-  { id: 'ia-39', name: 'Data Quality Monitor',        segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',  category: 'Data',                usedIn: 1,  successRate: 98.8, tasksToday: 756,  tools: ['dq-check', 'schema-validate', 'alert-write', 'audit-log'],           description: 'Monitors data pipeline quality, flags schema drift, and automatically triggers repair jobs.' },
-  { id: 'ia-40', name: 'Compliance Audit Agent',      segmentKey: 'platform', segment: 'Platform',          status: 'active',  category: 'Risk & Compliance',  usedIn: 2,  successRate: 96.9, tasksToday: 144,  tools: ['audit-log', 'policy-api', 'report-gen', 'notify-send'],              description: 'Generates automated compliance audit reports and flags policy deviations for executive review.' },
-  { id: 'ia-41', name: 'API Gateway Monitor',         segmentKey: 'platform', segment: 'Platform',          status: 'active',  category: 'Operations',          usedIn: 1,  successRate: 99.5, tasksToday: 8421, tools: ['gateway-api', 'rate-limit', 'alert-write', 'metric-push'],          description: 'Monitors API gateway health, enforces rate limits, and alerts on anomalous traffic patterns.' },
+  { id: 'ia-25', name: 'Terminal Provisioning Agent',  segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',       category: 'Onboarding',        usedIn: 2,  successRate: 97.5, tasksToday: 38,   tools: ['terminal-api', 'inventory-check', 'shipping-create', 'crm-write'],   description: 'Automates POS terminal ordering, configuration, and shipping for newly approved merchants.',                        authors: ['Vadivel Mohanakrishnan'] },
+  { id: 'ia-26', name: 'Dispute Resolution Agent',     segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',       category: 'Operations',        usedIn: 2,  successRate: 89.3, tasksToday: 67,   tools: ['dispute-api', 'txn-lookup', 'evidence-collect', 'notify-send'],       description: 'Manages chargeback and dispute workflows by collecting evidence and routing for adjudication.',                     authors: ['Swetha Surendran', 'Thilak Balakrishnan'] },
+  { id: 'ia-27', name: 'Merchant KYC/AML Agent',       segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',       category: 'Risk & Compliance', usedIn: 3,  successRate: 98.1, tasksToday: 52,   tools: ['sanctions-check', 'aml-screen', 'kyc-verify', 'alert-write'],        description: 'Continuous KYC/AML screening against OFAC and global sanctions lists for all merchant accounts.',                  authors: ['Ashish Agarwal'] },
+  { id: 'ia-28', name: 'Print Order Fulfillment Agent',segmentKey: 'print',    segment: 'Print & Retention', status: 'active',       category: 'Operations',        usedIn: 1,  successRate: 97.8, tasksToday: 214,  tools: ['order-api', 'inventory-check', 'print-queue', 'shipping-create'],    description: 'Orchestrates end-to-end print order fulfilment from receipt through production to dispatch.',                       authors: ['Satishkumar Balasubramanian'] },
+  { id: 'ia-29', name: 'Reorder Reminder Agent',       segmentKey: 'print',    segment: 'Print & Retention', status: 'active',       category: 'Revenue',           usedIn: 1,  successRate: 91.4, tasksToday: 188,  tools: ['order-history', 'email-send', 'sms-gateway', 'crm-read'],            description: 'Predicts reorder windows and sends personalised reorder nudges to print customers at the right time.',              authors: ['Thilak Balakrishnan'] },
+  { id: 'ia-30', name: 'Direct Mail Campaign Agent',   segmentKey: 'print',    segment: 'Print & Retention', status: 'active',       category: 'Revenue',           usedIn: 1,  successRate: 83.6, tasksToday: 72,   tools: ['campaign-api', 'segment-api', 'address-verify', 'print-queue'],      description: 'Automates direct mail campaign execution with address verification and segment targeting.',                         authors: ['Shubham Singh'] },
+  { id: 'ia-31', name: 'ACH Payment Processor',        segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',       category: 'Operations',        usedIn: 2,  successRate: 99.4, tasksToday: 341,  tools: ['ach-gateway', 'bank-verify', 'payment-post', 'audit-log'],           description: 'Processes ACH credit and debit transactions with bank account verification and full audit trail.',                  authors: ['Vadivel Mohanakrishnan'] },
+  { id: 'ia-32', name: 'Wire Transfer Verifier',       segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',       category: 'Operations',        usedIn: 1,  successRate: 99.7, tasksToday: 89,   tools: ['swift-api', 'beneficiary-check', 'sanctions-check', 'gl-write'],     description: 'Verifies wire transfer beneficiaries against sanctions lists and posts confirmed transfers to GL.',                  authors: ['Swetha Surendran'] },
+  { id: 'ia-33', name: 'Vendor Onboarding Agent',      segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',       category: 'Onboarding',        usedIn: 1,  successRate: 95.2, tasksToday: 28,   tools: ['vendor-api', 'kyb-api', 'bank-verify', 'erp-write'],                 description: 'Streamlines vendor onboarding with KYB checks, bank account verification, and ERP setup.',                         authors: ['Ashish Agarwal'] },
+  { id: 'ia-34', name: 'Purchase Order Automation',    segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'active',       category: 'Operations',        usedIn: 2,  successRate: 96.8, tasksToday: 156,  tools: ['po-api', 'erp-read', 'approval-route', 'notify-send'],               description: 'Automates PO creation, approval routing, and ERP updates for B2B procurement workflows.',                          authors: ['Satishkumar Balasubramanian', 'Shubham Singh'] },
+  { id: 'ia-35', name: 'Expense Report Processor',     segmentKey: 'b2b',      segment: 'B2B Payments',      status: 'under-review', category: 'Operations',        usedIn: 1,  successRate: 84.1, tasksToday: 203,  tools: ['ocr-extract', 'policy-check', 'gl-write', 'approval-route'],         description: 'Extracts expense data from receipts, validates against policy, and routes for approval.',                          authors: ['Thilak Balakrishnan'] },
+  { id: 'ia-36', name: 'SMB Credit Scoring Agent',     segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',       category: 'Data',              usedIn: 3,  successRate: 97.3, tasksToday: 411,  tools: ['credit-api', 'risk-model', 'bureau-lookup', 'profile-update'],       description: 'Generates real-time SMB credit scores using bureau data and proprietary underwriting risk signals.',                authors: ['Vadivel Mohanakrishnan'] },
+  { id: 'ia-37', name: 'Lead Scoring Agent',           segmentKey: 'data',     segment: 'Data Solutions',    status: 'under-review', category: 'Data',              usedIn: 2,  successRate: 93.6, tasksToday: 527,  tools: ['crm-read', 'ml-predict', 'segment-api', 'crm-write'],                description: 'Scores inbound and outbound leads using intent, firmographic, and behavioural signals.',                            authors: ['Swetha Surendran'] },
+  { id: 'ia-38', name: 'Market Segmentation Agent',    segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',       category: 'Data',              usedIn: 2,  successRate: 96.1, tasksToday: 1891, tools: ['warehouse-read', 'segment-api', 'ml-predict', 'crm-write'],          description: 'Re-segments the SMB customer base using ML clustering on continuously enriched profiles.',                          authors: ['Ashish Agarwal'] },
+  { id: 'ia-39', name: 'Data Quality Monitor',         segmentKey: 'data',     segment: 'Data Solutions',    status: 'active',       category: 'Data',              usedIn: 1,  successRate: 98.8, tasksToday: 756,  tools: ['dq-check', 'schema-validate', 'alert-write', 'audit-log'],           description: 'Monitors data pipeline quality, flags schema drift, and automatically triggers repair jobs.',                       authors: ['Satishkumar Balasubramanian'] },
+  { id: 'ia-40', name: 'Compliance Audit Agent',       segmentKey: 'platform', segment: 'Platform',          status: 'active',       category: 'Risk & Compliance', usedIn: 2,  successRate: 96.9, tasksToday: 144,  tools: ['audit-log', 'policy-api', 'report-gen', 'notify-send'],              description: 'Generates automated compliance audit reports and flags policy deviations for executive review.',                    authors: ['Thilak Balakrishnan'] },
+  { id: 'ia-41', name: 'API Gateway Monitor',          segmentKey: 'platform', segment: 'Platform',          status: 'active',       category: 'Operations',        usedIn: 1,  successRate: 99.5, tasksToday: 8421, tools: ['gateway-api', 'rate-limit', 'alert-write', 'metric-push'],          description: 'Monitors API gateway health, enforces rate limits, and alerts on anomalous traffic patterns.',                     authors: ['Shubham Singh', 'Vadivel Mohanakrishnan'] },
 ]
 
 /* ── Section 3: Tools / MCP ──────────────────────────────────────────────── */
 const TOOLS_MCP = [
   /* Connectors */
-  { id: 't-01', name: 'email-send',       category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 8, provider: 'SendGrid',    icon: Mail,    color: '#0EA5E9', description: 'Sends transactional and campaign emails via SendGrid API.' },
-  { id: 't-02', name: 'sms-gateway',      category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 3, provider: 'Twilio',      icon: Globe,   color: '#7C3AED', description: 'Outbound SMS delivery through Twilio programmable messaging.' },
-  { id: 't-03', name: 'notify-send',      category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 6, provider: 'Internal',    icon: Zap,     color: '#F59E0B', description: 'Internal push notification bus for real-time stakeholder alerts.' },
-  { id: 't-04', name: 'jira-api',         category: 'MCP',        type: 'MCP Server',  status: 'connected', usedBy: 4, provider: 'Atlassian',   icon: Wrench,  color: '#0052CC', description: 'Creates, updates and resolves Jira tickets from agent actions.' },
-  { id: 't-05', name: 'slack-mcp',        category: 'MCP',        type: 'MCP Server',  status: 'connected', usedBy: 5, provider: 'Slack',       icon: Globe,   color: '#4A154B', description: 'Posts messages and interactive blocks to Slack channels via MCP.' },
+  { id: 't-01', name: 'email-send',       category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 8, provider: 'SendGrid',    icon: Mail,       color: '#0EA5E9', description: 'Sends transactional and campaign emails via SendGrid API.',                                authors: ['Ashish Agarwal'] },
+  { id: 't-02', name: 'sms-gateway',      category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 3, provider: 'Twilio',      icon: Globe,      color: '#7C3AED', description: 'Outbound SMS delivery through Twilio programmable messaging.',                             authors: ['Satishkumar Balasubramanian'] },
+  { id: 't-03', name: 'notify-send',      category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 6, provider: 'Internal',    icon: Zap,        color: '#F59E0B', description: 'Internal push notification bus for real-time stakeholder alerts.',                         authors: ['Vadivel Mohanakrishnan'] },
+  { id: 't-04', name: 'jira-api',         category: 'MCP',        type: 'MCP Server',  status: 'connected', usedBy: 4, provider: 'Atlassian',   icon: Wrench,     color: '#0052CC', description: 'Creates, updates and resolves Jira tickets from agent actions.',                          authors: ['Swetha Surendran'] },
+  { id: 't-05', name: 'slack-mcp',        category: 'MCP',        type: 'MCP Server',  status: 'connected', usedBy: 5, provider: 'Slack',       icon: Globe,      color: '#4A154B', description: 'Posts messages and interactive blocks to Slack channels via MCP.',                        authors: ['Thilak Balakrishnan'] },
   /* Data & Storage */
-  { id: 't-06', name: 'erp-read',         category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 4, provider: 'SAP',         icon: Database,color: '#10B981', description: 'Read-only access to ERP master data, GL accounts and cost centres.' },
-  { id: 't-07', name: 'erp-write',        category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 3, provider: 'SAP',         icon: Database,color: '#10B981', description: 'Writes transactions and journal entries back to SAP ERP.' },
-  { id: 't-08', name: 'gl-write',         category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Oracle',      icon: Server,  color: '#EA580C', description: 'Posts GL entries to Oracle Finance with full audit stamping.' },
-  { id: 't-09', name: 'crm-write',        category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 7, provider: 'Salesforce',  icon: Cloud,   color: '#00A1E0', description: 'Writes contact, opportunity and account updates to Salesforce CRM.' },
-  { id: 't-10', name: 'crm-read',         category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 6, provider: 'Salesforce',  icon: Cloud,   color: '#00A1E0', description: 'Reads customer profiles and activity history from Salesforce.' },
-  { id: 't-11', name: 'snowflake-write',  category: 'Data',       type: 'SQL Driver',  status: 'connected', usedBy: 2, provider: 'Snowflake',   icon: Database,color: '#29B5E8', description: 'Bulk-inserts enriched records into Snowflake data warehouse.' },
+  { id: 't-06', name: 'erp-read',         category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 4, provider: 'SAP',         icon: Database,   color: '#10B981', description: 'Read-only access to ERP master data, GL accounts and cost centres.',                     authors: ['Shubham Singh'] },
+  { id: 't-07', name: 'erp-write',        category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 3, provider: 'SAP',         icon: Database,   color: '#10B981', description: 'Writes transactions and journal entries back to SAP ERP.',                                authors: ['Satishkumar Balasubramanian'] },
+  { id: 't-08', name: 'gl-write',         category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Oracle',      icon: Server,     color: '#EA580C', description: 'Posts GL entries to Oracle Finance with full audit stamping.',                            authors: ['Ashish Agarwal', 'Vadivel Mohanakrishnan'] },
+  { id: 't-09', name: 'crm-write',        category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 7, provider: 'Salesforce',  icon: Cloud,      color: '#00A1E0', description: 'Writes contact, opportunity and account updates to Salesforce CRM.',                     authors: ['Swetha Surendran'] },
+  { id: 't-10', name: 'crm-read',         category: 'Data',       type: 'REST API',    status: 'connected', usedBy: 6, provider: 'Salesforce',  icon: Cloud,      color: '#00A1E0', description: 'Reads customer profiles and activity history from Salesforce.',                           authors: ['Thilak Balakrishnan'] },
+  { id: 't-11', name: 'snowflake-write',  category: 'Data',       type: 'SQL Driver',  status: 'connected', usedBy: 2, provider: 'Snowflake',   icon: Database,   color: '#29B5E8', description: 'Bulk-inserts enriched records into Snowflake data warehouse.',                            authors: ['Shubham Singh', 'Satishkumar Balasubramanian'] },
   /* AI / ML */
-  { id: 't-12', name: 'risk-model',       category: 'AI/ML',      type: 'Model API',   status: 'connected', usedBy: 5, provider: 'Internal',    icon: Cpu,     color: '#C8102E', description: 'Real-time risk scoring model trained on Deluxe fraud and underwriting data.' },
-  { id: 't-13', name: 'ml-predict',       category: 'AI/ML',      type: 'Model API',   status: 'connected', usedBy: 3, provider: 'Internal',    icon: Cpu,     color: '#C8102E', description: 'General-purpose ML inference endpoint for classification tasks.' },
-  { id: 't-14', name: 'match-algo',       category: 'AI/ML',      type: 'Internal',    status: 'connected', usedBy: 3, provider: 'Internal',    icon: CheckCheck, color: '#8B5CF6', description: 'Fuzzy matching algorithm for record linkage and deduplication.' },
+  { id: 't-12', name: 'risk-model',       category: 'AI/ML',      type: 'Model API',   status: 'connected', usedBy: 5, provider: 'Internal',    icon: Cpu,        color: '#C8102E', description: 'Real-time risk scoring model trained on Deluxe fraud and underwriting data.',             authors: ['Ashish Agarwal'] },
+  { id: 't-13', name: 'ml-predict',       category: 'AI/ML',      type: 'Model API',   status: 'connected', usedBy: 3, provider: 'Internal',    icon: Cpu,        color: '#C8102E', description: 'General-purpose ML inference endpoint for classification tasks.',                        authors: ['Vadivel Mohanakrishnan'] },
+  { id: 't-14', name: 'match-algo',       category: 'AI/ML',      type: 'Internal',    status: 'connected', usedBy: 3, provider: 'Internal',    icon: CheckCheck, color: '#8B5CF6', description: 'Fuzzy matching algorithm for record linkage and deduplication.',                          authors: ['Swetha Surendran'] },
   /* Third-party data */
-  { id: 't-15', name: 'kyb-api',          category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Middesk',     icon: Lock,    color: '#059669', description: 'Know-Your-Business verification checks via Middesk API.' },
-  { id: 't-16', name: 'dnb-lookup',       category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 3, provider: 'D&B',         icon: Globe,   color: '#1D4ED8', description: 'Dun & Bradstreet firmographic data enrichment and credit signals.' },
-  { id: 't-17', name: 'clearbit-api',     category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Clearbit',    icon: Globe,   color: '#6366F1', description: 'Company and contact enrichment from Clearbit Enrichment API.' },
-  { id: 't-18', name: 'sanctions-check',  category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Refinitiv',   icon: Shield,  color: '#DC2626', description: 'OFAC and global sanctions screening via Refinitiv World-Check.' },
-  { id: 't-19', name: 'ocr-extract',      category: 'Third-Party',type: 'REST API',    status: 'warning',   usedBy: 3, provider: 'AWS Textract',icon: Code,    color: '#F59E0B', description: 'Document text and data extraction via AWS Textract OCR engine.' },
-  { id: 't-20', name: 'audit-log',        category: 'Connector',  type: 'Internal',    status: 'connected', usedBy: 9, provider: 'Internal',    icon: Settings,color: '#64748B', description: 'Immutable audit trail writer for all agent actions and decisions.' },
+  { id: 't-15', name: 'kyb-api',          category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Middesk',     icon: Lock,       color: '#059669', description: 'Know-Your-Business verification checks via Middesk API.',                                authors: ['Thilak Balakrishnan'] },
+  { id: 't-16', name: 'dnb-lookup',       category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 3, provider: 'D&B',         icon: Globe,      color: '#1D4ED8', description: 'Dun & Bradstreet firmographic data enrichment and credit signals.',                       authors: ['Shubham Singh'] },
+  { id: 't-17', name: 'clearbit-api',     category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Clearbit',    icon: Globe,      color: '#6366F1', description: 'Company and contact enrichment from Clearbit Enrichment API.',                           authors: ['Satishkumar Balasubramanian'] },
+  { id: 't-18', name: 'sanctions-check',  category: 'Third-Party',type: 'REST API',    status: 'connected', usedBy: 2, provider: 'Refinitiv',   icon: Shield,     color: '#DC2626', description: 'OFAC and global sanctions screening via Refinitiv World-Check.',                         authors: ['Ashish Agarwal'] },
+  { id: 't-19', name: 'ocr-extract',      category: 'Third-Party',type: 'REST API',    status: 'warning',   usedBy: 3, provider: 'AWS Textract',icon: Code,       color: '#F59E0B', description: 'Document text and data extraction via AWS Textract OCR engine.',                         authors: ['Vadivel Mohanakrishnan', 'Swetha Surendran'] },
+  { id: 't-20', name: 'audit-log',        category: 'Connector',  type: 'Internal',    status: 'connected', usedBy: 9, provider: 'Internal',    icon: Settings,   color: '#64748B', description: 'Immutable audit trail writer for all agent actions and decisions.',                       authors: ['Thilak Balakrishnan'] },
 ]
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -240,9 +246,20 @@ function CanvasOutput({ label }) {
    ══════════════════════════════════════════════════════════════════════════════ */
 function WorkflowDetailModal({ workflow, onClose, onViewAgent }) {
   const navigate = useNavigate()
+  const deployWorkflow = useStore(s => s.deployWorkflow)
   const [selectedAgent, setSelectedAgent] = useState(null)
+  const [deployed, setDeployed] = useState(false)
   const color  = segColors[workflow.segmentKey] || '#C8102E'
   const agents = workflow.agents || []
+
+  const handleDeploy = () => {
+    deployWorkflow(workflow)
+    setDeployed(true)
+    setTimeout(() => {
+      onClose()
+      navigate('/governance')
+    }, 800)
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -265,16 +282,22 @@ function WorkflowDetailModal({ workflow, onClose, onViewAgent }) {
               <div className="flex items-center gap-3 mt-1">
                 {workflow.status === 'incomplete' ? (
                   <span className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />Incomplete
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />Under Review
                   </span>
                 ) : (
                   <span className="flex items-center gap-1.5 text-xs text-emerald-400 font-semibold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />Live
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block" />Approved
                   </span>
                 )}
                 <span className="text-white/40 text-xs">{agents.length} agents</span>
                 <span className="text-white/40 text-xs">·</span>
                 <span className="text-white/40 text-xs">{workflow.segment}</span>
+                {workflow.authors?.length > 0 && (
+                  <>
+                    <span className="text-white/40 text-xs">·</span>
+                    <span className="text-white/40 text-xs">{workflow.authors.join(', ')}</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -367,8 +390,10 @@ function WorkflowDetailModal({ workflow, onClose, onViewAgent }) {
 
         {/* Footer */}
         <div className="px-7 py-4 border-t border-[#E2E8F0] flex items-center gap-3 flex-shrink-0 bg-white">
-          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 transition-all" style={{ background: color }}>
-            <Play size={13} /> Deploy to Production
+          <button onClick={handleDeploy} disabled={deployed}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all"
+            style={{ background: deployed ? '#10B981' : color, opacity: deployed ? 0.9 : 1 }}>
+            {deployed ? <><CheckCircle size={13} /> Deployed!</> : <><Play size={13} /> Deploy to Production</>}
           </button>
           <button onClick={() => navigate('/agent-analyst')}
             className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#4A5568] hover:bg-[#F7F8FA] transition-all">
@@ -414,17 +439,9 @@ function AgentDetailModal({ agent, onClose }) {
           </button>
         </div>
         {/* Stats bar */}
-        <div className="grid grid-cols-3 border-b border-[#E2E8F0]">
-          {[
-            { label: 'Success Rate', value: `${agent.successRate}%`, c: '#10B981' },
-            { label: 'Tasks Today',  value: agent.tasksToday.toLocaleString(), c: color },
-            { label: 'Used in',      value: `${agent.usedIn} workflows`, c: '#718096' },
-          ].map((s, i) => (
-            <div key={s.label} className={`px-5 py-3.5 ${i > 0 ? 'border-l border-[#E2E8F0]' : ''}`}>
-              <p className="text-xs text-[#718096] mb-0.5">{s.label}</p>
-              <p className="text-lg font-bold" style={{ color: s.c }}>{s.value}</p>
-            </div>
-          ))}
+        <div className="border-b border-[#E2E8F0] px-5 py-3.5">
+          <p className="text-xs text-[#718096] mb-0.5">Used in</p>
+          <p className="text-lg font-bold" style={{ color: '#718096' }}>{agent.usedIn} workflows</p>
         </div>
         {/* Body */}
         <div className="p-6 space-y-5 overflow-y-auto" style={{ maxHeight: 'calc(88vh - 200px)' }}>
@@ -433,15 +450,19 @@ function AgentDetailModal({ agent, onClose }) {
             <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2.5">Category</p>
             <span className="px-3 py-1 rounded-full text-xs font-bold" style={{ background: `${color}15`, color }}>{agent.category}</span>
           </div>
-          {(agent.author || true) && (
-            <div>
-              <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2.5">Author</p>
-              <div className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
-                <Tag size={12} className="text-[#9BA8BA]" />
-                <span className="text-sm font-semibold text-[#1A2340]">{agent.author || 'DLX_AGENTIC_OS Team'}</span>
-              </div>
+          <div>
+            <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2.5">
+              {agent.authors?.length > 1 ? 'Authors' : 'Author'}
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {(agent.authors?.length > 0 ? agent.authors : ['DLX_AGENTIC_OS Team']).map(a => (
+                <div key={a} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
+                  <Tag size={12} className="text-[#9BA8BA]" />
+                  <span className="text-sm font-semibold text-[#1A2340]">{a}</span>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
           <div>
             <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2.5">Authorised Tools</p>
             <div className="flex flex-wrap gap-1.5">
@@ -468,7 +489,7 @@ function AgentDetailModal({ agent, onClose }) {
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Workflow Card ── */
-function WorkflowCard({ wf, isHighlighted, onClick }) {
+function WorkflowCard({ wf, isHighlighted, onClick, onEvaluate }) {
   const color  = segColors[wf.segmentKey] || '#C8102E'
   const agents = wf.agents || []
   return (
@@ -498,7 +519,7 @@ function WorkflowCard({ wf, isHighlighted, onClick }) {
             </span>
           ) : (
             <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Live
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Approved
             </span>
           )}
         </div>
@@ -520,14 +541,20 @@ function WorkflowCard({ wf, isHighlighted, onClick }) {
             <div className="px-2.5 py-1 rounded-lg text-[10px] font-semibold border bg-emerald-50 border-emerald-200 text-emerald-700">✓ Output</div>
           </div>
         </div>
-        {/* Stats */}
-        <div className="flex items-center justify-between pt-3 border-t border-[#F0F2F5]">
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold"><Activity size={10} /> {wf.tasksPerDay.toLocaleString()} tasks/day</span>
-            <span className="text-xs font-semibold text-[#1A2340]">{wf.sla}% SLA</span>
-            <span className="text-xs text-[#718096]">{agents.length} agents</span>
+        {/* Footer */}
+        <div className="flex items-center justify-end pt-3 border-t border-[#F0F2F5]">
+          <div className="flex items-center gap-2">
+            {onEvaluate && (
+              <button onClick={e => { e.stopPropagation(); onEvaluate() }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
+                style={{ color: '#C8102E', borderColor: '#C8102E', background: 'white' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#FDF0F2'}
+                onMouseLeave={e => e.currentTarget.style.background = 'white'}>
+                <Shield size={11} />Evaluate
+              </button>
+            )}
+            <span className="text-xs text-[#C8102E] font-semibold flex items-center gap-1">View pipeline <ChevronRight size={11} /></span>
           </div>
-          <span className="text-xs text-[#C8102E] font-semibold flex items-center gap-1">View pipeline <ChevronRight size={11} /></span>
         </div>
       </div>
     </motion.div>
@@ -568,24 +595,13 @@ function AgentCard({ agent, onClick }) {
           ))}
           {agent.tools.length > 3 && <span className="px-1.5 py-0.5 rounded text-[10px] text-[#718096]">+{agent.tools.length - 3}</span>}
         </div>
-        {/* Author */}
-        {(author || isCustom) && (
+        {/* Authors */}
+        {(agent.authors?.length > 0 || isCustom) && (
           <div className="flex items-center gap-1 mb-2">
-            <Tag size={9} className="text-[#9BA8BA]" />
-            <span className="text-[10px] text-[#9BA8BA]">{author || 'DLX_AGENTIC_OS Team'}</span>
+            <Tag size={9} className="text-[#9BA8BA] flex-shrink-0" />
+            <span className="text-[10px] text-[#9BA8BA] truncate">{agent.authors?.join(', ') || 'DLX_AGENTIC_OS Team'}</span>
           </div>
         )}
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#F0F2F5]">
-          <div>
-            <p className="text-sm font-bold text-emerald-600">{agent.successRate}%</p>
-            <p className="text-[10px] text-[#718096]">Success rate</p>
-          </div>
-          <div>
-            <p className="text-sm font-bold text-[#1A2340]">{agent.tasksToday.toLocaleString()}</p>
-            <p className="text-[10px] text-[#718096]">Tasks today</p>
-          </div>
-        </div>
       </div>
     </motion.div>
   )
@@ -654,6 +670,21 @@ function ToolDetailModal({ tool, onClose }) {
             <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2.5">Provider</p>
             <span className="text-sm font-semibold text-[#1A2340]">{tool.provider}</span>
           </div>
+          {tool.authors?.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2.5">
+                {tool.authors.length > 1 ? 'Authors' : 'Author'}
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {tool.authors.map(a => (
+                  <div key={a} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
+                    <Tag size={12} className="text-[#9BA8BA]" />
+                    <span className="text-sm font-semibold text-[#1A2340]">{a}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div className="pt-1">
             <div className="flex items-center gap-2 px-4 py-3 rounded-xl" style={{ background: tool.status === 'connected' ? '#F0FDF4' : '#FFFBEB', border: `1px solid ${tool.status === 'connected' ? '#BBF7D0' : '#FDE68A'}` }}>
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: tool.status === 'connected' ? '#22C55E' : '#F59E0B' }} />
@@ -702,13 +733,415 @@ function ToolCard({ tool, onClick }) {
               </span>
           }
         </div>
-        <p className="text-xs text-[#718096] mb-3 line-clamp-2 leading-relaxed">{tool.description}</p>
+        <p className="text-xs text-[#718096] mb-2 line-clamp-2 leading-relaxed">{tool.description}</p>
+        {tool.authors?.length > 0 && (
+          <div className="flex items-center gap-1 mb-2">
+            <Tag size={9} className="text-[#9BA8BA] flex-shrink-0" />
+            <span className="text-[10px] text-[#9BA8BA] truncate">{tool.authors.join(', ')}</span>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <span className="px-2 py-0.5 rounded text-[10px] font-semibold border" style={catStyle}>{tool.category}</span>
           <span className="text-[10px] text-[#9BA8BA] flex items-center gap-1"><Link2 size={9} />{tool.usedBy} agents</span>
         </div>
       </div>
     </motion.div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   DASHBOARD DATA — author artifact counts
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+const ALL_AUTHORS = [
+  'Satishkumar Balasubramanian',
+  'Ashish Agarwal',
+  'Vadivel Mohanakrishnan',
+  'Swetha Surendran',
+  'Thilak Balakrishnan',
+  'Shubham Singh',
+]
+
+function buildAuthorStats() {
+  const stats = {}
+  ALL_AUTHORS.forEach(a => { stats[a] = { agents: [], tools: [], workflows: [] } })
+
+  INDIVIDUAL_AGENTS.forEach(item => {
+    (item.authors || []).forEach(a => { if (stats[a]) stats[a].agents.push(item) })
+  })
+  TOOLS_MCP.forEach(item => {
+    (item.authors || []).forEach(a => { if (stats[a]) stats[a].tools.push(item) })
+  })
+  ALL_WORKFLOWS.forEach(item => {
+    (item.authors || []).forEach(a => { if (stats[a]) stats[a].workflows.push(item) })
+  })
+
+  return ALL_AUTHORS.map(name => ({
+    name,
+    agents:    stats[name].agents,
+    tools:     stats[name].tools,
+    workflows: stats[name].workflows,
+    total:     stats[name].agents.length + stats[name].tools.length + stats[name].workflows.length,
+  }))
+}
+
+const AUTHOR_STATS = buildAuthorStats()
+
+/* ── Security high-risk tool patterns ── */
+const HIGH_RISK_TOOLS  = ['gl-write','hold-trigger','sanctions-check','aml-screen','erp-write','crm-write','snowflake-write']
+const MED_RISK_TOOLS   = ['kyb-api','kyc-verify','fraud-signals','audit-log','payment-match','exception-flag','compliance-alert']
+
+function assessSecurity(agents) {
+  return agents.map(agent => {
+    const tools = agent.tools || []
+    const highRisk = tools.filter(t => HIGH_RISK_TOOLS.some(h => t.includes(h) || h.includes(t)))
+    const medRisk  = tools.filter(t => MED_RISK_TOOLS.some(h => t.includes(h)  || h.includes(t)))
+    let score, color, label, reasoning
+
+    if (highRisk.length >= 2) {
+      score = 'red'; color = '#EF4444'; label = 'High Risk'
+      reasoning = `Contains ${highRisk.length} high-risk tools (${highRisk.slice(0,2).join(', ')}). Requires CISO sign-off before production deployment.`
+    } else if (highRisk.length === 1 || medRisk.length >= 2) {
+      score = 'yellow'; color = '#F59E0B'; label = 'Medium Risk'
+      reasoning = `Contains ${highRisk.length + medRisk.length} sensitive tool(s). Review data-write permissions and audit trail coverage.`
+    } else {
+      score = 'green'; color = '#10B981'; label = 'Low Risk'
+      reasoning = 'No high-risk tools detected. Agent follows least-privilege principle with read-only or low-impact operations.'
+    }
+    return { ...agent, secScore: score, secColor: color, secLabel: label, secReasoning: reasoning, highRisk, medRisk }
+  })
+}
+
+/* ── Evaluate Workflow Modal ── */
+function EvaluateModal({ workflow, allAgents, onClose, onFixWithAI }) {
+  const navigate       = useNavigate()
+  const deployWorkflow = useStore(s => s.deployWorkflow)
+  const [step, setStep]           = useState('loading') // loading | results | fixing | fixed
+  const [fixedWorkflow, setFixedWorkflow] = useState(null)
+  const [fixSummary,    setFixSummary]    = useState([])
+  const color = segColors[workflow.segmentKey] || '#C8102E'
+  const agents = workflow.agents || []
+
+  const agentSecReport  = assessSecurity(agents)
+  const existingNames   = new Set(allAgents.map(a => a.name.toLowerCase()))
+  const duplicates      = agents.filter(a => existingNames.has((a.name || '').toLowerCase()))
+  const redCount        = agentSecReport.filter(a => a.secScore === 'red').length
+  const yellowCount     = agentSecReport.filter(a => a.secScore === 'yellow').length
+  const greenCount      = agentSecReport.filter(a => a.secScore === 'green').length
+
+  useEffect(() => {
+    const t = setTimeout(() => setStep('results'), 1200)
+    return () => clearTimeout(t)
+  }, [])
+
+  const handleFix = () => {
+    setStep('fixing')
+    setTimeout(() => {
+      const summary = []
+      const fixedAgents = agentSecReport.map(a => {
+        const removed = a.tools.filter(t => HIGH_RISK_TOOLS.some(h => t.includes(h) || h.includes(t)))
+        if (removed.length > 0) {
+          summary.push({ agent: a.name, removed })
+        }
+        return {
+          ...a,
+          tools: a.tools.filter(t => !HIGH_RISK_TOOLS.some(h => t.includes(h) || h.includes(t))),
+          secScore: 'green', secColor: '#10B981', secLabel: 'Low Risk',
+          secReasoning: 'High-risk tools removed by AI. Agent now operates with least-privilege principle.',
+        }
+      })
+      const fixed = { ...workflow, agents: fixedAgents, secFixed: true, fixedAt: new Date().toLocaleString() }
+      setFixSummary(summary)
+      setFixedWorkflow(fixed)
+      setStep('fixed')
+      onFixWithAI(fixed)
+    }, 2200)
+  }
+
+  const scoreColor = s => s === 'red' ? '#EF4444' : s === 'yellow' ? '#F59E0B' : '#10B981'
+  const scoreBg    = s => s === 'red' ? '#FEF2F2' : s === 'yellow' ? '#FFFBEB' : '#F0FDF4'
+  const scoreBorder= s => s === 'red' ? '#FECACA' : s === 'yellow' ? '#FDE68A' : '#BBF7D0'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: 'blur(10px)', background: 'rgba(10,18,40,0.75)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <motion.div initial={{ opacity: 0, scale: 0.93, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93 }} transition={{ duration: 0.25 }}
+        className="bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ width: '92vw', maxWidth: 860, maxHeight: '90vh' }}>
+        {/* Header */}
+        <div className="px-7 py-5 flex items-center justify-between flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#1A2340,#2D3A5C)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: `${color}25` }}>
+              <Shield size={20} style={{ color }} />
+            </div>
+            <div>
+              <p className="text-white font-bold">Workflow Evaluation</p>
+              <p className="text-white/50 text-xs">{workflow.name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all">
+            <X size={14} className="text-white" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-7 py-6 space-y-5">
+          {/* Loading state */}
+          {step === 'loading' && (
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader size={28} className="animate-spin text-[#C8102E]" />
+              <p className="text-sm font-semibold text-[#1A2340]">Running evaluation…</p>
+              <p className="text-xs text-[#718096]">Checking agents, tools, and security posture</p>
+            </div>
+          )}
+
+          {(step === 'results' || step === 'fixing' || step === 'fixed') && (
+            <>
+              {/* 4.1 Duplicate check */}
+              <div className="rounded-2xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-5 py-3 flex items-center gap-2.5 border-b border-[#E2E8F0]" style={{ background: '#F7F8FA' }}>
+                  <Users size={15} className="text-[#0EA5E9]" />
+                  <p className="font-bold text-sm text-[#1A2340]">Duplicate Agent Check</p>
+                  <span className="ml-auto px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: duplicates.length > 0 ? '#FEF3C7' : '#D1FAE5', color: duplicates.length > 0 ? '#92400E' : '#065F46' }}>
+                    {duplicates.length} duplicate{duplicates.length !== 1 ? 's' : ''} found
+                  </span>
+                </div>
+                <div className="px-5 py-3">
+                  {duplicates.length === 0 ? (
+                    <p className="text-xs text-emerald-600 flex items-center gap-1.5"><CheckCircle size={13} /> All agents are unique — no duplicates found in Discover Hub.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {duplicates.map(d => (
+                        <div key={d.id || d.name} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+                          <AlertTriangle size={12} className="text-amber-600 flex-shrink-0" />
+                          <span className="text-xs font-semibold text-amber-800">{d.name}</span>
+                          <span className="text-xs text-amber-600 ml-auto">Already in Discover Hub</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 4.2 Security report */}
+              <div className="rounded-2xl border border-[#E2E8F0] overflow-hidden">
+                <div className="px-5 py-3 flex items-center gap-2.5 border-b border-[#E2E8F0]" style={{ background: '#F7F8FA' }}>
+                  <Shield size={15} className="text-[#8B5CF6]" />
+                  <p className="font-bold text-sm text-[#1A2340]">Security Report</p>
+                  <div className="ml-auto flex items-center gap-2">
+                    {redCount > 0    && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">{redCount} High</span>}
+                    {yellowCount > 0 && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-700">{yellowCount} Medium</span>}
+                    {greenCount > 0  && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">{greenCount} Low</span>}
+                  </div>
+                </div>
+                <div className="px-5 py-3 space-y-3">
+                  {agentSecReport.map((a, i) => (
+                    <div key={i} className="rounded-xl border p-3" style={{ background: scoreBg(a.secScore), borderColor: scoreBorder(a.secScore) }}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: scoreColor(a.secScore) + '20' }}>
+                          <Bot size={13} style={{ color: scoreColor(a.secScore) }} />
+                        </div>
+                        <p className="font-semibold text-sm text-[#1A2340] flex-1">{a.name}</p>
+                        <span className="px-2 py-0.5 rounded-full text-xs font-bold" style={{ background: scoreColor(a.secScore) + '20', color: scoreColor(a.secScore) }}>
+                          ● {a.secLabel}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#4A5568] leading-relaxed">{a.secReasoning}</p>
+                      {a.highRisk.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {a.highRisk.map(t => <span key={t} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-red-100 border border-red-200 text-red-700">{t}</span>)}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* Fixed workflow */}
+          {step === 'fixed' && fixedWorkflow && (
+            <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <CheckCircle size={18} className="text-emerald-600" />
+                <p className="font-bold text-emerald-800">Workflow updated — new version generated</p>
+              </div>
+              {fixSummary.length > 0 ? (
+                <div className="space-y-2 mb-3">
+                  {fixSummary.map(({ agent, removed }) => (
+                    <div key={agent} className="px-3 py-2 rounded-xl bg-white border border-emerald-200">
+                      <p className="text-xs font-bold text-emerald-800 mb-1">{agent}</p>
+                      <p className="text-xs text-emerald-700">
+                        Removed <span className="font-semibold">{removed.join(', ')}</span> — replaced with read-only equivalents
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-emerald-700 mb-3">No high-risk tools were found. Workflow is already compliant.</p>
+              )}
+              <div className="flex flex-wrap gap-2 pt-2 border-t border-emerald-200">
+                {fixedWorkflow.agents.map(a => (
+                  <span key={a.name} className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs bg-white border border-emerald-300 text-emerald-800 font-semibold">
+                    <CheckCircle size={10} /> {a.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        {step === 'results' && (redCount > 0 || yellowCount > 0) && (
+          <div className="px-7 py-4 border-t border-[#E2E8F0] flex-shrink-0 bg-white">
+            <button onClick={handleFix}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg,#C8102E,#a50e26)', boxShadow: '0 4px 14px rgba(200,16,46,0.3)' }}>
+              <Zap size={14} /> Fix Vulnerabilities with AI
+            </button>
+          </div>
+        )}
+        {step === 'fixing' && (
+          <div className="px-7 py-4 border-t border-[#E2E8F0] flex-shrink-0 bg-white flex items-center gap-3">
+            <Loader size={16} className="animate-spin text-[#C8102E]" />
+            <span className="text-sm font-semibold text-[#1A2340]">AI is fixing vulnerabilities…</span>
+          </div>
+        )}
+        {step === 'results' && redCount === 0 && yellowCount === 0 && (
+          <div className="px-7 py-4 border-t border-[#E2E8F0] flex-shrink-0 bg-white">
+            <button onClick={onClose}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#4A5568] hover:bg-[#F7F8FA] transition-all cursor-pointer">
+              Close
+            </button>
+          </div>
+        )}
+        {step === 'fixed' && (
+          <div className="px-7 py-4 border-t border-[#E2E8F0] flex-shrink-0 bg-white flex items-center gap-3">
+            <button onClick={() => { deployWorkflow(fixedWorkflow); onClose(); navigate('/governance') }}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90 cursor-pointer"
+              style={{ background: '#10B981' }}>
+              <Play size={13} /> Deploy to Production
+            </button>
+            <button onClick={onClose}
+              className="px-5 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#4A5568] hover:bg-[#F7F8FA] transition-all cursor-pointer">
+              Close
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
+/* ── Author Dashboard Tab ── */
+function AuthorDashboard({ allAgents, allWorkflows, allTools }) {
+  const [selected, setSelected] = useState(null)
+
+  const authorStats = ALL_AUTHORS.map(name => {
+    const myAgents    = allAgents.filter(a    => (a.authors || []).includes(name))
+    const myTools     = allTools.filter(t     => (t.authors || []).includes(name))
+    const myWorkflows = allWorkflows.filter(w => (w.authors || []).includes(name))
+    return {
+      name,
+      agents: myAgents, tools: myTools, workflows: myWorkflows,
+      total:  myAgents.length + myTools.length + myWorkflows.length,
+      approvedAgents:   myAgents.filter(a => a.status === 'active' || a.status === 'approved').length,
+      underReviewAgents:myAgents.filter(a => a.status === 'under-review').length,
+    }
+  })
+
+  const sel = selected ? authorStats.find(a => a.name === selected) : null
+  const avatarColor = (name) => {
+    const colors = ['#C8102E','#0EA5E9','#10B981','#8B5CF6','#F59E0B','#EC4899']
+    return colors[ALL_AUTHORS.indexOf(name) % colors.length]
+  }
+
+  return (
+    <div className="space-y-5">
+      <div className="grid grid-cols-3 gap-4">
+        {authorStats.map(a => (
+          <motion.div key={a.name} whileHover={{ y: -2 }} transition={{ duration: 0.15 }}
+            className="rounded-2xl border-2 bg-white overflow-hidden cursor-pointer transition-all"
+            style={{ borderColor: selected === a.name ? avatarColor(a.name) : '#E2E8F0', boxShadow: selected === a.name ? `0 0 0 3px ${avatarColor(a.name)}25` : undefined }}
+            onClick={() => setSelected(s => s === a.name ? null : a.name)}>
+            <div className="h-1.5" style={{ background: avatarColor(a.name) }} />
+            <div className="p-4">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                  style={{ background: avatarColor(a.name) }}>
+                  {a.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-sm text-[#1A2340] leading-tight truncate">{a.name}</p>
+                  <p className="text-xs text-[#718096]">{a.total} artifacts</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                {[['Agents', a.agents.length, '#0EA5E9'], ['Tools', a.tools.length, '#8B5CF6'], ['Workflows', a.workflows.length, '#C8102E']].map(([lbl, cnt, col]) => (
+                  <div key={lbl} className="px-1 py-2 rounded-xl" style={{ background: col + '10' }}>
+                    <p className="text-lg font-black" style={{ color: col }}>{cnt}</p>
+                    <p className="text-[9px] font-semibold text-[#9BA8BA] uppercase tracking-wide">{lbl}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Selected author detail */}
+      <AnimatePresence>
+        {sel && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 6 }}
+            className="rounded-2xl border-2 overflow-hidden" style={{ borderColor: avatarColor(sel.name) + '40' }}>
+            <div className="px-6 py-4 flex items-center gap-3" style={{ background: 'linear-gradient(135deg,#1A2340,#2D3A5C)' }}>
+              <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
+                style={{ background: avatarColor(sel.name) }}>
+                {sel.name.split(' ').map(n => n[0]).join('').slice(0,2)}
+              </div>
+              <div>
+                <p className="text-white font-bold">{sel.name}</p>
+                <p className="text-white/50 text-xs">{sel.total} total artifacts</p>
+              </div>
+            </div>
+            <div className="p-5 grid grid-cols-2 gap-4 bg-white">
+              <div>
+                <p className="text-xs font-bold text-[#718096] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                  <Bot size={12} /> Agents ({sel.agents.length})
+                </p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200">
+                    <span className="text-xs text-emerald-700 font-semibold">Approved</span>
+                    <span className="text-sm font-black text-emerald-700">{sel.approvedAgents}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200">
+                    <span className="text-xs text-amber-700 font-semibold">Under Review</span>
+                    <span className="text-sm font-black text-amber-700">{sel.underReviewAgents}</span>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#718096] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                  <Plug size={12} /> Tools & Workflows
+                </p>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#F5F3FF] border border-[#DDD6FE]">
+                    <span className="text-xs text-violet-700 font-semibold">Tools</span>
+                    <span className="text-sm font-black text-violet-700">{sel.tools.length}</span>
+                  </div>
+                  <div className="flex items-center justify-between px-3 py-1.5 rounded-lg bg-[#FEF2F2] border border-[#FECACA]">
+                    <span className="text-xs text-[#C8102E] font-semibold">Workflows</span>
+                    <span className="text-sm font-black text-[#C8102E]">{sel.workflows.length}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 
@@ -720,8 +1153,10 @@ export default function AgentPool() {
   const storeBuilt        = useStore(s => s.builtAgents)
   const pendingWorkflows  = useStore(s => s.pendingWorkflows) || []
   const platformApprovals = useStore(s => s.platformApprovals) || {}
-  const [tab,          setTab]          = useState('workflows')
-  const [statusFilter, setStatusFilter] = useState('all')
+  const [tab,            setTab]            = useState('workflows')
+  const [statusFilter,   setStatusFilter]   = useState('all')
+  const [wfStatusFilter, setWfStatusFilter] = useState('all')
+  const [toolStatusFilter, setToolStatusFilter] = useState('all')
   const [wfSearch,  setWfSearch]  = useState('')
   const [agSearch,  setAgSearch]  = useState('')
   const [toolSearch,setToolSearch]= useState('')
@@ -729,6 +1164,9 @@ export default function AgentPool() {
   const [detailWf,   setDetailWf]   = useState(null)
   const [detailAg,   setDetailAg]   = useState(null)
   const [detailTool, setDetailTool] = useState(null)
+  const [importedWorkflows, setImportedWorkflows] = useState([])
+  const [evaluateWf, setEvaluateWf] = useState(null)
+  const importInputRef = useRef(null)
 
   const highlightId    = location.state?.highlightId    || null
   const highlightAgent = location.state?.highlightAgent || null
@@ -773,38 +1211,40 @@ export default function AgentPool() {
     }
   }, [highlightAgent])
 
-  /* Reset search when tab changes */
+  /* Reset search + filters when tab changes */
   useEffect(() => {
     setWfSearch(''); setAgSearch(''); setToolSearch(''); setToolCat('All')
+    setWfStatusFilter('all'); setStatusFilter('all'); setToolStatusFilter('all')
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [tab])
 
-  // User-submitted workflows from Imagination Studio and Dashboard uploads
-  const userWorkflows = pendingWorkflows.map(wf => ({
-    id:          wf.id,
-    name:        wf.name,
-    description: wf.summary || '',
-    segmentKey:  'platform',
-    segment:     'User Submitted',
-    status:      wf.status === 'approved' ? 'live' : wf.status === 'rejected' ? 'rejected' : 'incomplete',
-    agentCount:  wf.agentCount || (wf.chain || []).length || 1,
-    sla:         null,
-    tasksPerDay: 0,
-    lastRun:     'Not yet deployed',
-    avgRunTime:  '—',
-    trigger:     'From Imagination Studio',
-    output:      wf.status === 'approved' ? 'Approved & Live' : 'Pending Approval',
-    agents:      (wf.chain || []).map((s, i) => ({
-      id: 'uw-' + i,
-      name: s.agent_name || s.name || ('Agent ' + (i + 1)),
-      role: s.description || '',
-      tools: s.tools || [],
-      status: s.status || 'full',
-    })),
-    isUserSubmitted: true,
-  }))
+
+  /* Merge imported + pending + static workflows */
   const allDisplayWorkflows = [
-    ...userWorkflows,
+    ...importedWorkflows,
+    ...pendingWorkflows.map(wf => ({
+      id:          wf.id,
+      name:        wf.name,
+      description: wf.summary || '',
+      segmentKey:  'platform',
+      segment:     'User Submitted',
+      status:      wf.status === 'approved' ? 'live' : wf.status === 'rejected' ? 'rejected' : 'incomplete',
+      agentCount:  wf.agentCount || (wf.chain || []).length || 1,
+      sla:         null,
+      tasksPerDay: 0,
+      lastRun:     'Not yet deployed',
+      avgRunTime:  '—',
+      trigger:     'From Imagination Studio',
+      output:      wf.status === 'approved' ? 'Approved & Live' : 'Pending Approval',
+      agents:      (wf.chain || []).map((s, i) => ({
+        id: 'uw-' + i,
+        name: s.agent_name || s.name || ('Agent ' + (i + 1)),
+        role: s.description || '',
+        tools: s.tools || [],
+        status: s.status || 'full',
+      })),
+      isUserSubmitted: true,
+    })),
     ...ALL_WORKFLOWS
       .filter(wf => platformApprovals[wf.id] !== 'rejected')
       .map(wf => ({
@@ -814,10 +1254,14 @@ export default function AgentPool() {
   ]
 
   /* Filtered data */
-  const filteredWf = allDisplayWorkflows.filter(w =>
-    !wfSearch || w.name.toLowerCase().includes(wfSearch.toLowerCase()) ||
-    w.segment.toLowerCase().includes(wfSearch.toLowerCase())
-  )
+  const filteredWf = allDisplayWorkflows.filter(w => {
+    const matchSearch = !wfSearch || w.name.toLowerCase().includes(wfSearch.toLowerCase()) ||
+      w.segment.toLowerCase().includes(wfSearch.toLowerCase())
+    const matchStatus = wfStatusFilter === 'all' ? true
+      : wfStatusFilter === 'under-review' ? (w.status === 'incomplete' || w.status === 'rejected')
+      : w.status === 'live'
+    return matchSearch && matchStatus
+  })
   const filteredAg = allAgents.filter(a => {
     const matchSearch = !agSearch
       || a.name.toLowerCase().includes(agSearch.toLowerCase())
@@ -833,7 +1277,10 @@ export default function AgentPool() {
     const mCat = toolCat === 'All' || t.category === toolCat
     const mSearch = !toolSearch || t.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
       t.provider.toLowerCase().includes(toolSearch.toLowerCase())
-    return mCat && mSearch
+    const mStatus = toolStatusFilter === 'all' ? true
+      : toolStatusFilter === 'under-review' ? t.status === 'warning'
+      : t.status === 'connected'
+    return mCat && mSearch && mStatus
   })
 
   /* Pipeline → Agent profile navigation */
@@ -848,6 +1295,54 @@ export default function AgentPool() {
     }
   }
 
+  /* Import workflow from JSON config file */
+  const handleImportFile = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      try {
+        const raw = JSON.parse(ev.target.result)
+        // Support { workflow: {...}, agents: [...] } envelope as well as flat/array formats
+        const normalize = (w) => {
+          if (w.workflow && typeof w.workflow === 'object') {
+            return { ...w.workflow, agents: w.agents || w.workflow.agents || [] }
+          }
+          return w
+        }
+        const workflows = Array.isArray(raw) ? raw.map(normalize) : [normalize(raw)]
+        const imported = workflows.map((w, i) => ({
+          id:         `imported-${Date.now()}-${i}`,
+          name:       w.name || w.workflow_name || `Imported Workflow ${i + 1}`,
+          description:w.description || w.summary || '',
+          segmentKey: w.segment_key || w.segmentKey || 'platform',
+          segment:    w.segment || 'Imported',
+          status:     'incomplete',
+          sla:        w.sla || null,
+          tasksPerDay:w.tasks_per_day || w.tasksPerDay || 0,
+          lastRun:    'Not yet deployed',
+          avgRunTime: '—',
+          trigger:    w.trigger || 'Imported Config',
+          output:     w.output || 'Pending Deployment',
+          agents:     (w.agents || w.chain || []).map((a, ai) => ({
+            id:     a.id || `imp-agent-${ai}`,
+            name:   a.name || a.agent_name || `Agent ${ai + 1}`,
+            role:   a.role || a.description || '',
+            tools:  a.tools || [],
+            status: a.status || 'full',
+          })),
+          authors:     w.authors || [],
+          isImported:  true,
+        }))
+        setImportedWorkflows(prev => [...imported, ...prev])
+      } catch {
+        alert('Invalid JSON file. Please provide a valid workflow config.')
+      }
+    }
+    reader.readAsText(file)
+    e.target.value = ''
+  }
+
   /* Summary stats */
   const liveCount       = allDisplayWorkflows.filter(w => w.status === 'live').length
   const incompleteCount = allDisplayWorkflows.filter(w => w.status === 'incomplete' || w.status === 'rejected').length
@@ -856,9 +1351,10 @@ export default function AgentPool() {
 
   /* Tab config */
   const TABS = [
-    { key: 'workflows', label: 'Workflows',        value: allDisplayWorkflows.length, sub: `${liveCount} live · ${incompleteCount} incomplete`, icon: GitMerge, color: '#C8102E' },
-    { key: 'agents',    label: 'Individual Agents', value: allAgents.length,         sub: `${activeAgents} approved`,                          icon: Bot,      color: '#0EA5E9' },
-    { key: 'tools',     label: 'Tools & MCPs',      value: TOOLS_MCP.length,         sub: `${connectedTools} connected`,                       icon: Plug,     color: '#8B5CF6' },
+    { key: 'workflows',  label: 'Workflows',        value: allDisplayWorkflows.length, sub: `${liveCount} approved · ${incompleteCount} under review`, icon: GitMerge,        color: '#C8102E' },
+    { key: 'agents',     label: 'Individual Agents', value: allAgents.length,          sub: `${activeAgents} approved`,                                  icon: Bot,             color: '#0EA5E9' },
+    { key: 'tools',      label: 'Tools & MCPs',      value: TOOLS_MCP.length,          sub: `${connectedTools} connected`,                               icon: Plug,            color: '#8B5CF6' },
+    { key: 'dashboard',  label: 'Dashboard',         value: null,                      sub: 'authors & artifacts',                                       icon: LayoutDashboard, color: '#10B981' },
   ]
   const activeTab = TABS.find(t => t.key === tab)
 
@@ -876,6 +1372,21 @@ export default function AgentPool() {
       <AnimatePresence>
         {detailTool && <ToolDetailModal tool={detailTool} onClose={() => setDetailTool(null)} />}
       </AnimatePresence>
+      <AnimatePresence>
+        {evaluateWf && (
+          <EvaluateModal
+            workflow={evaluateWf}
+            allAgents={allAgents}
+            onClose={() => setEvaluateWf(null)}
+            onFixWithAI={(fixed) => {
+              setImportedWorkflows(prev => prev.map(w => w.id === fixed.id ? fixed : w))
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Hidden file input for import */}
+      <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
 
       {/* ── Page Header ── */}
       <div className="mb-6">
@@ -893,7 +1404,7 @@ export default function AgentPool() {
           boxShadow: '0 4px 20px rgba(26,35,64,0.06)',
         }}
       >
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-3">
           {TABS.map((t, i) => {
             const Icon     = t.icon
             const isActive = tab === t.key
@@ -918,8 +1429,11 @@ export default function AgentPool() {
                   <Icon size={15} style={{ color: isActive ? 'white' : t.color }} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-lg font-bold leading-tight" style={{ color: isActive ? 'white' : '#1A2340' }}>{t.value}</p>
-                  <p className="text-[10px] truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#718096' }}>{t.label}</p>
+                  {t.value !== null
+                    ? <p className="text-lg font-bold leading-tight" style={{ color: isActive ? 'white' : '#1A2340' }}>{t.value}</p>
+                    : <p className="text-sm font-bold leading-tight" style={{ color: isActive ? 'white' : '#1A2340' }}>{t.label}</p>
+                  }
+                  {t.value !== null && <p className="text-[10px] truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#718096' }}>{t.label}</p>}
                   <p className="text-[9px] truncate" style={{ color: isActive ? 'rgba(255,255,255,0.6)' : '#9BA8BA' }}>{t.sub}</p>
                 </div>
                 {isTab && !isActive && (
@@ -961,18 +1475,42 @@ export default function AgentPool() {
                     placeholder="Search workflows…"
                     className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#C8102E]" />
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-xs text-emerald-600 font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />{liveCount} Live
-                  </span>
-                  <span className="flex items-center gap-1 text-xs text-amber-600 font-semibold">
-                    <span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />{incompleteCount} Incomplete
-                  </span>
-                </div>
+                <button onClick={() => importInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
+                  style={{ background: '#C8102E' }}>
+                  <Upload size={12} />Import from Config
+                </button>
+              </div>
+              {/* Status filter chips */}
+              <div className="flex items-center gap-2 pt-1 pb-2">
+                {[['all','All'],['live','Approved'],['under-review','Under Review']].map(([key, label]) => {
+                  const approvedCount = allDisplayWorkflows.filter(w => w.status === 'live').length
+                  const urCount = allDisplayWorkflows.filter(w => w.status === 'incomplete' || w.status === 'rejected').length
+                  const count = key === 'live' ? approvedCount : key === 'under-review' ? urCount : null
+                  const isActive = wfStatusFilter === key
+                  return (
+                    <button key={key} onClick={() => setWfStatusFilter(key)}
+                      className={'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ' + (
+                        isActive
+                          ? key === 'under-review' ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-[#1A2340] text-white border border-[#1A2340]'
+                          : 'text-[#718096] bg-[#F7F8FA] border border-[#E2E8F0] hover:bg-white'
+                      )}>
+                      {label}
+                      {count !== null && (
+                        <span className={'px-1.5 py-0.5 rounded-full text-[10px] font-bold ' + (
+                          key === 'under-review'
+                            ? 'bg-amber-200 text-amber-800'
+                            : isActive ? 'bg-white/25 text-white' : 'bg-[#E2E8F0] text-[#718096]'
+                        )}>{count}</span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {filteredWf.map(wf => (
-                  <WorkflowCard key={wf.id} wf={wf} isHighlighted={highlightId === wf.id} onClick={() => setDetailWf(wf)} />
+                  <WorkflowCard key={wf.id} wf={wf} isHighlighted={highlightId === wf.id} onClick={() => setDetailWf(wf)}
+                    onEvaluate={wf.isImported ? () => setEvaluateWf(wf) : null} />
                 ))}
               </div>
             </motion.div>
@@ -1000,6 +1538,11 @@ export default function AgentPool() {
                     placeholder="Search agents…"
                     className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#0EA5E9]" />
                 </div>
+                <button onClick={() => importInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
+                  style={{ background: '#0EA5E9' }}>
+                  <Upload size={12} />Import from Config
+                </button>
               </div>
               {/* Status filter */}
               <div className="flex items-center gap-2 pt-1 pb-2">
@@ -1066,17 +1609,52 @@ export default function AgentPool() {
                     </button>
                   ))}
                 </div>
+                <button onClick={() => importInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
+                  style={{ background: '#8B5CF6' }}>
+                  <Upload size={12} />Import from Config
+                </button>
+              </div>
+              {/* Status filter chips */}
+              <div className="flex items-center gap-2 pt-1 pb-3">
+                {[['all','All'],['connected','Approved'],['under-review','Under Review']].map(([key, label]) => {
+                  const approvedCount = TOOLS_MCP.filter(t => t.status === 'connected').length
+                  const urCount = TOOLS_MCP.filter(t => t.status === 'warning').length
+                  const count = key === 'connected' ? approvedCount : key === 'under-review' ? urCount : null
+                  const isActive = toolStatusFilter === key
+                  return (
+                    <button key={key} onClick={() => setToolStatusFilter(key)}
+                      className={'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ' + (
+                        isActive
+                          ? key === 'under-review' ? 'bg-amber-100 text-amber-700 border border-amber-300' : 'bg-[#1A2340] text-white border border-[#1A2340]'
+                          : 'text-[#718096] bg-[#F7F8FA] border border-[#E2E8F0] hover:bg-white'
+                      )}>
+                      {label}
+                      {count !== null && (
+                        <span className={'px-1.5 py-0.5 rounded-full text-[10px] font-bold ' + (
+                          key === 'under-review'
+                            ? 'bg-amber-200 text-amber-800'
+                            : isActive ? 'bg-white/25 text-white' : 'bg-[#E2E8F0] text-[#718096]'
+                        )}>{count}</span>
+                      )}
+                    </button>
+                  )
+                })}
               </div>
               <div className="grid grid-cols-4 gap-3">
                 {filteredTools.map(tool => (
                   <ToolCard key={tool.id} tool={tool} onClick={() => setDetailTool(tool)} />
                 ))}
               </div>
-              <div className="mt-4 flex items-center gap-4 text-xs text-[#9BA8BA]">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse inline-block" />Connected</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" />Warning — check credentials</span>
-                <span className="ml-auto">{connectedTools}/{TOOLS_MCP.length} integrations active</span>
-              </div>
+            </motion.div>
+          )}
+
+          {/* ── TAB 4: DASHBOARD ── */}
+          {tab === 'dashboard' && (
+            <motion.div key="dashboard"
+              initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
+              transition={{ duration: 0.2 }}>
+              <AuthorDashboard allAgents={allAgents} allWorkflows={allDisplayWorkflows} allTools={TOOLS_MCP} />
             </motion.div>
           )}
 

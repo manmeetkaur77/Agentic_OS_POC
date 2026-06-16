@@ -1,0 +1,19 @@
+{
+  "name": "Accounts Payable Notification Agent",
+  "description": "Single-agent automation that monitors AP inboxes, extracts invoice metadata via OCR, and sends structured payment-due alerts to the finance team — eliminating manual email triage.",
+  "segment_key": "b2b",
+  "segment": "B2B Payments",
+  "trigger": "Invoice Email Received",
+  "output": "Payment-Due Alert Sent to Finance Team",
+  "tasks_per_day": 140,
+  "sla": 98.2,
+  "authors": ["Ashish Agarwal"],
+  "agents": [
+    {
+      "name": "AP Notification Agent",
+      "role": "Reads incoming AP inbox, extracts invoice number, vendor, amount and due date via OCR, then pushes a structured alert to the finance Slack channel and CRM",
+      "tools": ["email-inbox", "ocr-extract", "crm-read", "notify-send", "slack-mcp"],
+      "status": "full"
+    }
+  ]
+}

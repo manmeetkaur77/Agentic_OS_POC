@@ -83,6 +83,32 @@ const useStore = create((set) => ({
     ),
   })),
 
+  deployWorkflow: (wf) => set((s) => {
+    const id = wf.id || `deployed-${Date.now()}`
+    // Don't duplicate if already in the list
+    if (s.pendingWorkflows.some(w => w.id === id)) {
+      return {}
+    }
+    return {
+      pendingWorkflows: [
+        ...s.pendingWorkflows,
+        {
+          id,
+          name: wf.name,
+          summary: wf.description || '',
+          chain: (wf.agents || []).map(a => ({
+            agent_name: a.name,
+            description: a.role || '',
+            tools: a.tools || [],
+            status: a.status || 'full',
+          })),
+          status: 'pending',
+          submittedAt: new Date().toISOString(),
+        },
+      ],
+    }
+  }),
+
   // Decisions on hardcoded platform agents/workflows (not in builtAgents/pendingWorkflows)
   platformApprovals: {},
   setPlatformApproval: (id, decision) => set((s) => ({

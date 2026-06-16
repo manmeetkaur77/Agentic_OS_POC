@@ -1499,22 +1499,14 @@ export default function ImagineStudio() {
 
   // Collapse pipeline during conversation; collapse chat + expand pipeline when analysis lands
   useEffect(() => {
-    if (phase >= 1 && phase < 5) {
-      setPipelineCollapsed(true)
+    if (phase === 0) {
       setChatCollapsed(false)
-    } else if (phase === 5) {
-      setChatCollapsed(true)
-      setPipelineCollapsed(false)
-    } else if (phase === 0) {
-      setChatCollapsed(false)
-      setPipelineCollapsed(false)
     }
   }, [phase])
 
-  // Keep pipeline expanded once workflow result arrives
+  // Expand pipeline panel once workflow result arrives
   useEffect(() => {
     if (workflowResult && !workflowLoading) {
-      setChatCollapsed(true)
       setPipelineCollapsed(false)
     }
   }, [workflowResult, workflowLoading])
@@ -2366,11 +2358,13 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
       style={{
         display: 'grid',
         gap: '20px',
-        gridTemplateColumns: pipelineCollapsed
-          ? '1fr 48px'
-          : chatCollapsed
-            ? '48px 1fr'
-            : '44% 1fr',
+        gridTemplateColumns: (!workflowResult && !workflowLoading)
+          ? '1fr'
+          : pipelineCollapsed
+            ? '1fr 48px'
+            : chatCollapsed
+              ? '48px 1fr'
+              : '44% 1fr',
         transition: 'grid-template-columns 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
       }}
     >
@@ -2545,71 +2539,66 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
         </div>
 
         {/* Input */}
-        <div className="flex-shrink-0 p-4 border-t border-[#E2E8F0]">
+        <div className="flex-shrink-0 px-4 pb-4 pt-3 border-t border-[#E2E8F0] bg-white">
           {/* Refinement chips — shown after results are delivered */}
           {phase >= 5 && !typing && (
             <div className="flex flex-wrap gap-1.5 mb-2.5">
               <span className="text-xs text-[#9BA8BA] self-center mr-1">Refine:</span>
-              {[
-                'Add more context',
-                'Different segment',
-                'Suggest new agents',
-                'Re-analyze from scratch',
-              ].map(chip => (
-                <button
-                  key={chip}
+              {['Add more context','Different segment','Suggest new agents','Re-analyze from scratch'].map(chip => (
+                <button key={chip}
                   onClick={() => {
-                    if (chip === 'Re-analyze from scratch') {
-                      handleReset()
-                    } else {
-                      setInput(prev => prev ? prev : chip === 'Add more context' ? '' : chip + ' — ')
-                      if (chip !== 'Add more context') document.querySelector('textarea')?.focus()
-                    }
+                    if (chip === 'Re-analyze from scratch') { handleReset() }
+                    else { setInput(prev => prev ? prev : chip === 'Add more context' ? '' : chip + ' — '); inputRef.current?.focus() }
                   }}
-                  className="px-2.5 py-1 rounded-full border border-[#E2E8F0] text-xs text-[#4A5568] hover:border-[#C8102E] hover:text-[#C8102E] hover:bg-[#FDF0F2] transition-all"
-                >
+                  className="px-2.5 py-1 rounded-full border border-[#E2E8F0] text-xs text-[#4A5568] hover:border-[#C8102E] hover:text-[#C8102E] hover:bg-[#FDF0F2] transition-all">
                   {chip}
                 </button>
               ))}
             </div>
           )}
-          <div className="flex items-center gap-2">
+          {/* Build Workflow trigger — shown once conversation has started */}
+          {messages.length > 0 && !workflowResult && (
+            <div className="mb-2">
+              <button
+                onClick={() => analyzeWorkflow(input.trim() || (messages.filter(m => m.role === 'user').pop()?.content ?? ''))}
+                disabled={workflowLoading || messages.length === 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white transition-all disabled:opacity-40 hover:opacity-90 active:scale-95"
+                style={{ background: '#1A2340' }}
+              >
+                {workflowLoading ? <Loader size={11} className="animate-spin" /> : <GitMerge size={11} />}
+                {workflowLoading ? 'Building workflow…' : 'Build Workflow'}
+              </button>
+            </div>
+          )}
+          {/* Chat input row */}
+          <div className="flex items-end gap-2 rounded-2xl border border-[#E2E8F0] bg-[#F7F8FA] px-3 py-2 focus-within:border-[#C8102E] focus-within:bg-white transition-all">
             <textarea
               ref={inputRef}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => { setInput(e.target.value); e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px' }}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmit() } }}
               placeholder={phase >= 5 ? 'Add more context to refine the analysis…' : 'Describe your business problem…'}
               rows={1}
               disabled={typing}
-              className="flex-1 h-11 px-4 rounded-xl border border-[#E2E8F0] text-sm resize-none focus:outline-none focus:border-[#C8102E] disabled:bg-[#F7F8FA] disabled:text-[#CBD5E0] leading-[2.75rem]"
+              className="flex-1 bg-transparent text-sm resize-none focus:outline-none text-[#1A2340] placeholder-[#9BA8BA] disabled:text-[#CBD5E0] leading-relaxed min-h-[36px] max-h-[120px] py-1"
+              style={{ lineHeight: '1.5' }}
             />
             <button
               onClick={handleSubmit}
               disabled={!input.trim() || typing}
-              className="h-11 w-11 flex-shrink-0 rounded-xl flex items-center justify-center text-white disabled:opacity-40 transition-all hover:opacity-90 active:scale-95"
+              className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-white disabled:opacity-35 transition-all hover:opacity-90 active:scale-95 mb-0.5"
               style={{ background: '#C8102E' }}
               title="Send message"
             >
-              <Send size={15} />
-            </button>
-            <button
-              onClick={() => analyzeWorkflow(input.trim() || (messages.filter(m => m.role === 'user').pop()?.content ?? ''))}
-              disabled={workflowLoading || (messages.length === 0 && !input.trim())}
-              className="h-11 flex-shrink-0 flex items-center gap-1.5 px-4 rounded-xl text-xs font-semibold text-white transition-all disabled:opacity-40 whitespace-nowrap hover:opacity-90 active:scale-95"
-              style={{ background: '#1A2340' }}
-              title="Analyse and build a complete workflow for this problem"
-            >
-              {workflowLoading ? <Loader size={12} className="animate-spin" /> : <GitMerge size={12} />}
-              Build Workflow
+              <Send size={14} />
             </button>
           </div>
         </div>
         </div>{/* end full-chat wrapper */}
       </div>
 
-      {/* ── RIGHT: Workflow Pipeline panel ── */}
-      <div className="card overflow-hidden relative flex flex-col min-w-0">
+      {/* ── RIGHT: Workflow Pipeline panel — only visible once a workflow is built ── */}
+      {(workflowResult || workflowLoading) && <div className="card overflow-hidden relative flex flex-col min-w-0">
 
         {/* ── Pipeline collapsed strip ── */}
         {pipelineCollapsed && (
@@ -2734,8 +2723,59 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
             </motion.div>
           )}
 
-          {/* ✅ Main: Workflow pipeline view */}
-          {!workflowLoading && workflowResult && (
+          {/* ✅ Single agent — simple deploy card */}
+          {!workflowLoading && workflowResult && workflowResult.chain?.length === 1 && (
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+              className="space-y-4">
+              <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider flex items-center gap-1.5">
+                <Bot size={11} /> Agent Recommendation
+              </p>
+              <div className="rounded-2xl border-2 border-[#C8102E]/30 overflow-hidden" style={{ background: 'linear-gradient(135deg,#FFF5F5,#FFF)' }}>
+                <div className="h-1" style={{ background: '#C8102E' }} />
+                <div className="p-5">
+                  <div className="flex items-start gap-3 mb-4">
+                    <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#FDF0F2' }}>
+                      <Bot size={20} style={{ color: '#C8102E' }} />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-bold text-[#1A2340] text-sm">{workflowResult.chain[0].agent_name || workflowResult.chain[0].title}</p>
+                      <p className="text-xs text-[#718096] mt-0.5 leading-relaxed">{workflowResult.chain[0].description || workflowResult.summary}</p>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold flex-shrink-0"
+                      style={{ background: workflowResult.chain[0].status === 'full' ? '#D1FAE5' : '#FEF3C7', color: workflowResult.chain[0].status === 'full' ? '#065F46' : '#92400E' }}>
+                      {workflowResult.chain[0].status === 'full' ? '✓ Ready' : '⚠ Needs Work'}
+                    </span>
+                  </div>
+                  {workflowResult.chain[0].tools?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-semibold text-[#718096] uppercase tracking-wider mb-2">Tools</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {workflowResult.chain[0].tools.map(t => (
+                          <span key={t} className="px-2 py-0.5 rounded text-[10px] font-mono bg-[#F0F4FF] border border-[#C7D2FE] text-[#4338CA]">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => navigate('/agent-pool')}
+                      className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+                      style={{ background: '#C8102E' }}>
+                      <Play size={13} /> Deploy Agent
+                    </button>
+                    <button
+                      onClick={handleSendForApproval}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-[#E2E8F0] text-[#4A5568] hover:bg-[#F7F8FA] transition-all">
+                      <CheckCircle size={13} /> Approve
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ✅ Multi-agent: Workflow pipeline view */}
+          {!workflowLoading && workflowResult && (workflowResult.chain?.length || 0) > 1 && (
             <WorkflowPipelineView
               result={workflowResult}
               navigate={navigate}
@@ -2779,7 +2819,7 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
           </div>
         )}
         </div>{/* end full-pipeline wrapper */}
-      </div>
+      </div>}
 
     </motion.div>
     </>

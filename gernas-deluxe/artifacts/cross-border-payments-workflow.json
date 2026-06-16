@@ -1,0 +1,37 @@
+{
+  "name": "Cross-Border Payment Compliance Pipeline",
+  "description": "End-to-end automation for international B2B wire transfers — real-time FX rate locking, SWIFT beneficiary validation, multi-jurisdiction sanctions screening, and automated GL posting with regulatory audit trail.",
+  "segment_key": "b2b",
+  "segment": "B2B Payments",
+  "trigger": "Cross-Border Wire Transfer Initiated",
+  "output": "Transfer Executed — Regulatory Audit Trail Filed",
+  "tasks_per_day": 310,
+  "sla": 99.1,
+  "authors": ["Vadivel Mohanakrishnan", "Swetha Surendran"],
+  "agents": [
+    {
+      "name": "FX Rate Lock Agent",
+      "role": "Fetches real-time FX rates from treasury feed, locks the exchange rate for the transfer window, and records the rate agreement in the ERP to prevent slippage exposure",
+      "tools": ["fx-rate-api", "treasury-feed", "erp-write", "audit-log"],
+      "status": "full"
+    },
+    {
+      "name": "SWIFT Beneficiary Validator",
+      "role": "Validates IBAN, BIC/SWIFT codes and beneficiary bank details against the SWIFT network, performs name-matching against known counterparty records, and flags mismatches for review",
+      "tools": ["swift-api", "iban-verify", "beneficiary-check", "crm-read", "sanctions-check"],
+      "status": "full"
+    },
+    {
+      "name": "Multi-Jurisdiction AML Screener",
+      "role": "Runs the transaction and all involved parties through OFAC, EU consolidated list, UN sanctions, and FinCEN watchlists simultaneously — auto-holds any transaction with a match score above threshold",
+      "tools": ["aml-screen", "sanctions-check", "hold-trigger", "compliance-alert", "audit-log"],
+      "status": "full"
+    },
+    {
+      "name": "Regulatory GL Posting Agent",
+      "role": "Posts the confirmed wire transfer to the general ledger with full regulatory metadata, generates the BSA/AML transaction record, and archives the complete audit package to the document vault",
+      "tools": ["gl-write", "erp-write", "report-gen", "audit-log", "vault-store"],
+      "status": "full"
+    }
+  ]
+}

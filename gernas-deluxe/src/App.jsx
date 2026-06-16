@@ -19,7 +19,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route index element={<Navigate to="/studio" replace />} />
           <Route path="dashboard"      element={<Dashboard />} />
           <Route path="orchestration"  element={<AgentOrchestration />} />
           <Route path="merchant"       element={<MerchantOnboarding />} />

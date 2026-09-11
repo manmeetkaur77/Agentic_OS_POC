@@ -5,15 +5,16 @@ import {
   Search, Layers, CheckCircle, AlertCircle, Zap, Bot,
   CreditCard, Printer, FileText, Database, Shield,
   Plus, ChevronRight, Play, Edit3,
-  GitMerge, X, Activity, ArrowRight, Terminal,
+  GitMerge, X, Activity, Terminal,
   Plug, Package, Link2, Mail, Globe, Cpu, Tag,
   Clock, Users, BarChart2, Settings, Code, CheckCheck,
   Wrench, Server, Cloud, Lock, Upload, AlertTriangle,
-  Award, LayoutDashboard, TrendingUp, Loader
+  Award, LayoutDashboard, TrendingUp, Loader,
+  Sparkles, ArrowUpRight, List, LayoutGrid as GridIcon
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
-const segColors = { merchant: '#0EA5E9', print: '#6B7280', b2b: '#8B5CF6', data: '#10B981', platform: '#C8102E', shared: '#F59E0B' }
+export const segColors = { merchant: '#0EA5E9', print: '#6B7280', b2b: '#8B5CF6', data: '#10B981', platform: '#C8102E', shared: '#F59E0B' }
 const segIcons  = { merchant: CreditCard, print: Printer, b2b: FileText, data: Database, platform: Shield, shared: Layers }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -21,7 +22,7 @@ const segIcons  = { merchant: CreditCard, print: Printer, b2b: FileText, data: D
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Section 1: Workflows ─────────────────────────────────────────────────── */
-const ALL_WORKFLOWS = [
+export const ALL_WORKFLOWS = [
   {
     id: 'wf-001',
     name: 'SMB Merchant Onboarding Pipeline',
@@ -108,7 +109,7 @@ const ALL_WORKFLOWS = [
 ]
 
 /* ── Section 2: Individual Agents ────────────────────────────────────────── */
-const INDIVIDUAL_AGENTS = [
+export const INDIVIDUAL_AGENTS = [
   /* Merchant Services */
   { id: 'ia-01', name: 'KYB Verification Agent',  segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Risk & Compliance', usedIn: 2, successRate: 99.1, tasksToday: 423,  tools: ['kyb-api', 'dnb-lookup', 'sanctions-check'],      description: 'Verifies business identity and sanctions screening via multiple regulatory APIs.',                                  authors: ['Satishkumar Balasubramanian', 'Ashish Agarwal'] },
   { id: 'ia-02', name: 'Document Collection Bot', segmentKey: 'merchant', segment: 'Merchant Services', status: 'active',  category: 'Onboarding',         usedIn: 3, successRate: 98.4, tasksToday: 319,  tools: ['doc-parser', 'email-send', 'ocr-extract'],        description: 'Requests, parses and validates merchant documents with OCR and validation rules.',                                    authors: ['Vadivel Mohanakrishnan'] },
@@ -160,7 +161,7 @@ const INDIVIDUAL_AGENTS = [
 ]
 
 /* ── Section 3: Tools / MCP ──────────────────────────────────────────────── */
-const TOOLS_MCP = [
+export const TOOLS_MCP = [
   /* Connectors */
   { id: 't-01', name: 'email-send',       category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 8, provider: 'SendGrid',    icon: Mail,       color: '#0EA5E9', description: 'Sends transactional and campaign emails via SendGrid API.',                                authors: ['Ashish Agarwal'] },
   { id: 't-02', name: 'sms-gateway',      category: 'Connector',  type: 'REST API',    status: 'connected', usedBy: 3, provider: 'Twilio',      icon: Globe,      color: '#7C3AED', description: 'Outbound SMS delivery through Twilio programmable messaging.',                             authors: ['Satishkumar Balasubramanian'] },
@@ -186,6 +187,45 @@ const TOOLS_MCP = [
   { id: 't-19', name: 'ocr-extract',      category: 'Third-Party',type: 'REST API',    status: 'warning',   usedBy: 3, provider: 'AWS Textract',icon: Code,       color: '#F59E0B', description: 'Document text and data extraction via AWS Textract OCR engine.',                         authors: ['Vadivel Mohanakrishnan', 'Swetha Surendran'] },
   { id: 't-20', name: 'audit-log',        category: 'Connector',  type: 'Internal',    status: 'connected', usedBy: 9, provider: 'Internal',    icon: Settings,   color: '#64748B', description: 'Immutable audit trail writer for all agent actions and decisions.',                       authors: ['Thilak Balakrishnan'] },
 ]
+
+/* ── Section 4: Bundles — curated agent + tool packages solving one workflow ── */
+const BUNDLES = ALL_WORKFLOWS.map(wf => ({
+  id:          `bundle-${wf.id}`,
+  workflowId:  wf.id,
+  name:        `${wf.name} Bundle`,
+  description: wf.description,
+  segmentKey:  wf.segmentKey,
+  segment:     wf.segment,
+  status:      wf.status,
+  agentCount:  (wf.agents || []).length,
+  toolCount:   new Set((wf.agents || []).flatMap(a => a.tools || [])).size,
+}))
+
+/* ── Discover Hub card helpers ─────────────────────────────────────────────── */
+const AGENT_CATEGORY_ICON = {
+  'Risk & Compliance': Shield,
+  'Onboarding':         Users,
+  'Operations':         Wrench,
+  'Data':               Database,
+  'Revenue':            TrendingUp,
+  'Custom':             Sparkles,
+}
+const ACCESS_CHANNELS = [
+  { label: 'Chat',     bg: '#DCFCE7', text: '#166534' },
+  { label: 'REST API', bg: '#DBEAFE', text: '#1D4ED8' },
+  { label: 'Webhook',  bg: '#F5F3FF', text: '#7C3AED' },
+  { label: 'A2A',      bg: '#F1F5F9', text: '#475569' },
+]
+function estimateAvgTime(agent) {
+  const perDay = agent.tasksToday || 1
+  const secs = Math.max(2, Math.round(20000 / perDay))
+  if (secs < 60) return `${secs}s`
+  const mins = Math.round(secs / 60)
+  return mins < 60 ? `${mins}min` : `${(mins / 60).toFixed(1)}h`
+}
+function estimateKYA(agent) {
+  return Math.min(99, Math.max(70, Math.round((agent.successRate ?? 90) - 3)))
+}
 
 /* ══════════════════════════════════════════════════════════════════════════════
    CANVAS COMPONENTS (shared)
@@ -489,72 +529,85 @@ function AgentDetailModal({ agent, onClose }) {
    ══════════════════════════════════════════════════════════════════════════════ */
 
 /* ── Workflow Card ── */
-function WorkflowCard({ wf, isHighlighted, onClick, onEvaluate }) {
+/* ── Use Case Tile (workflow, styled to match the Discover Hub tile grammar) ── */
+function UseCaseTile({ wf, isHighlighted, onClick, onDeploy, onEvaluate }) {
   const color  = segColors[wf.segmentKey] || '#C8102E'
   const agents = wf.agents || []
+  const toolCount = new Set(agents.flatMap(a => a.tools || [])).size
+  const statusCfg = wf.status === 'rejected'
+    ? { label: 'REJECTED', bg: 'bg-red-100', text: 'text-red-700' }
+    : wf.status === 'incomplete'
+      ? { label: 'UNDER REVIEW', bg: 'bg-amber-100', text: 'text-amber-700' }
+      : { label: 'PRODUCTION', bg: 'bg-emerald-100', text: 'text-emerald-700' }
+
   return (
-    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }} onClick={onClick} className="cursor-pointer rounded-2xl border-2 overflow-hidden transition-all bg-white"
+    <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }} onClick={onClick}
+      className="rounded-2xl border bg-white overflow-hidden cursor-pointer hover:shadow-md transition-all flex flex-col"
       style={{ borderColor: isHighlighted ? color : '#E2E8F0', boxShadow: isHighlighted ? `0 0 0 3px ${color}25` : undefined }}>
-      <div className="h-1.5" style={{ background: color }} />
-      <div className="p-5">
-        {/* Title row */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15` }}>
-              <GitMerge size={16} style={{ color }} />
+      <div className="p-4 flex-1 flex flex-col">
+        {/* Icon + status badge */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: color }}>
+            <GitMerge size={19} className="text-white" />
+          </div>
+          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${statusCfg.bg} ${statusCfg.text}`}>{statusCfg.label}</span>
+        </div>
+
+        {/* Name + segment */}
+        <p className="text-sm font-bold text-[#1A2340] leading-tight">{wf.name}</p>
+        <span className="inline-block mt-1.5 mb-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F1F5F9] text-[#64748B] w-fit">
+          {wf.segment}
+        </span>
+
+        {/* Description */}
+        <p className="text-xs text-[#718096] mb-3 line-clamp-2 leading-relaxed">{wf.description}</p>
+
+        <div className="border-t border-[#F0F2F5] pt-3 mb-3">
+          {/* 3-stat row */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div>
+              <p className="text-sm font-bold text-emerald-600">{wf.sla != null ? `${wf.sla}%` : '—'}</p>
+              <p className="text-[10px] text-[#9BA8BA] uppercase tracking-wide">SLA</p>
             </div>
             <div>
-              <p className="text-sm font-bold text-[#1A2340] leading-tight">{wf.name}</p>
-              <p className="text-xs text-[#718096] mt-0.5 leading-relaxed line-clamp-1">{wf.description}</p>
+              <p className="text-sm font-bold text-[#1A2340]">{wf.avgRunTime || '—'}</p>
+              <p className="text-[10px] text-[#9BA8BA] uppercase tracking-wide">Avg Run</p>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1A2340]">{(wf.tasksPerDay || 0).toLocaleString()}</p>
+              <p className="text-[10px] text-[#9BA8BA] uppercase tracking-wide">Daily</p>
             </div>
           </div>
-          {wf.status === 'rejected' ? (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-700 border border-red-200 flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 inline-block" />Rejected
-            </span>
-          ) : wf.status === 'incomplete' ? (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />Under Review
-            </span>
-          ) : (
-            <span className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 flex-shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Approved
-            </span>
+
+          {/* Pipeline meta */}
+          <div className="flex items-center gap-1.5">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700"><Bot size={9} /> {agents.length} agents</span>
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F1F5F9] text-[#64748B]"><Plug size={9} /> {toolCount} tools</span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-auto">
+          <button
+            onClick={e => { e.stopPropagation(); onDeploy?.(wf) }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: color }}
+          >
+            <ArrowUpRight size={12} /> Deploy
+          </button>
+          {onEvaluate && (
+            <button onClick={e => { e.stopPropagation(); onEvaluate() }}
+              className="px-3 py-2 rounded-xl text-xs font-semibold text-[#C8102E] bg-white border border-[#C8102E] hover:bg-[#FDF0F2] transition-all"
+              title="Evaluate">
+              <Shield size={13} />
+            </button>
           )}
-        </div>
-        {/* Mini pipeline */}
-        <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1">
-          <div className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[10px] font-semibold border"
-            style={{ background: `${color}08`, borderColor: `${color}30`, color }}>⚡ Trigger</div>
-          {agents.map((agent) => (
-            <div key={agent.id} className="flex items-center gap-1.5 flex-shrink-0">
-              <ArrowRight size={10} className="text-[#CBD5E0]" />
-              <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border"
-                style={{ background: agent.status === 'full' ? '#F0FDF4' : '#FFFBEB', borderColor: agent.status === 'full' ? '#BBF7D0' : '#FDE68A', color: agent.status === 'full' ? '#065F46' : '#92400E' }}>
-                <Bot size={9} />{agent.name.split(' ')[0]}
-              </div>
-            </div>
-          ))}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <ArrowRight size={10} className="text-[#CBD5E0]" />
-            <div className="px-2.5 py-1 rounded-lg text-[10px] font-semibold border bg-emerald-50 border-emerald-200 text-emerald-700">✓ Output</div>
-          </div>
-        </div>
-        {/* Footer */}
-        <div className="flex items-center justify-end pt-3 border-t border-[#F0F2F5]">
-          <div className="flex items-center gap-2">
-            {onEvaluate && (
-              <button onClick={e => { e.stopPropagation(); onEvaluate() }}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition-colors"
-                style={{ color: '#C8102E', borderColor: '#C8102E', background: 'white' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#FDF0F2'}
-                onMouseLeave={e => e.currentTarget.style.background = 'white'}>
-                <Shield size={11} />Evaluate
-              </button>
-            )}
-            <span className="text-xs text-[#C8102E] font-semibold flex items-center gap-1">View pipeline <ChevronRight size={11} /></span>
-          </div>
+          <button
+            onClick={e => { e.stopPropagation(); onClick?.() }}
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#4A5568] bg-white border border-[#E2E8F0] hover:bg-[#F7F8FA] transition-all"
+          >
+            Details
+          </button>
         </div>
       </div>
     </motion.div>
@@ -562,46 +615,155 @@ function WorkflowCard({ wf, isHighlighted, onClick, onEvaluate }) {
 }
 
 /* ── Individual Agent Card ── */
-function AgentCard({ agent, onClick }) {
-  const { author = null, isCustom = false } = agent
-  const color = segColors[agent.segmentKey] || '#718096'
-  const Icon  = segIcons[agent.segmentKey] || Bot
+function AgentCard({ agent, onClick, onDeploy }) {
+  const isApproved = agent.status === 'active' || agent.status === 'approved'
+  const CatIcon = AGENT_CATEGORY_ICON[agent.category] || Bot
+  const kya = estimateKYA(agent)
+
   return (
     <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }}
-      className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden cursor-pointer hover:border-[#CBD5E0] hover:shadow-md transition-all"
+      className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden cursor-pointer hover:border-[#CBD5E0] hover:shadow-md transition-all flex flex-col"
       onClick={onClick}>
-      <div className="h-1" style={{ background: color }} />
-      <div className="p-4">
-        <div className="flex items-start gap-3 mb-3">
-          <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15` }}>
-            <Bot size={16} style={{ color }} />
+      <div className="p-4 flex-1 flex flex-col">
+        {/* Icon + status badge */}
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#1A2340' }}>
+            <CatIcon size={19} className="text-white" />
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-[#1A2340] leading-tight truncate">{agent.name}</p>
-            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-              <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: `${color}15`, color }}>{agent.segment}</span>
-              {agent.status === 'active'
-                ? <span className="flex items-center gap-1 text-[10px] text-emerald-600 font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Approved</span>
-                : <span className="flex items-center gap-1 text-[10px] text-amber-600 font-semibold"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />Under Review</span>
-              }
+          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+            isApproved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+          }`}>
+            {isApproved ? 'PRODUCTION' : 'UNDER REVIEW'}
+          </span>
+        </div>
+
+        {/* Name + category */}
+        <p className="text-sm font-bold text-[#1A2340] leading-tight">{agent.name}</p>
+        <span className="inline-block mt-1.5 mb-2 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#F1F5F9] text-[#64748B] w-fit">
+          {agent.category}
+        </span>
+
+        {/* Description */}
+        <p className="text-xs text-[#718096] mb-3 line-clamp-2 leading-relaxed">{agent.description}</p>
+
+        <div className="border-t border-[#F0F2F5] pt-3 mb-3">
+          {/* 3-stat row */}
+          <div className="grid grid-cols-3 gap-2 mb-3">
+            <div>
+              <p className="text-sm font-bold text-emerald-600">{agent.successRate}%</p>
+              <p className="text-[10px] text-[#9BA8BA] uppercase tracking-wide">Accuracy</p>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1A2340]">{estimateAvgTime(agent)}</p>
+              <p className="text-[10px] text-[#9BA8BA] uppercase tracking-wide">Avg Time</p>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-[#1A2340]">{(agent.tasksToday || 0).toLocaleString()}</p>
+              <p className="text-[10px] text-[#9BA8BA] uppercase tracking-wide">Daily</p>
             </div>
           </div>
-        </div>
-        <p className="text-xs text-[#718096] mb-3 line-clamp-2 leading-relaxed">{agent.description}</p>
-        {/* Tools */}
-        <div className="flex flex-wrap gap-1 mb-3">
-          {agent.tools.slice(0, 3).map(t => (
-            <span key={t} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#F0F4FF] text-[#4338CA] border border-[#C7D2FE]">{t}</span>
-          ))}
-          {agent.tools.length > 3 && <span className="px-1.5 py-0.5 rounded text-[10px] text-[#718096]">+{agent.tools.length - 3}</span>}
-        </div>
-        {/* Authors */}
-        {(agent.authors?.length > 0 || isCustom) && (
-          <div className="flex items-center gap-1 mb-2">
-            <Tag size={9} className="text-[#9BA8BA] flex-shrink-0" />
-            <span className="text-[10px] text-[#9BA8BA] truncate">{agent.authors?.join(', ') || 'DLX_AGENTIC_OS Team'}</span>
+
+          {/* KYA + Certified */}
+          <div className="flex items-center gap-1.5 mb-3">
+            <span className="text-[10px] text-[#9BA8BA] font-semibold mr-0.5">KYA:</span>
+            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+              kya >= 90 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+            }`}>{kya} Score</span>
+            {isApproved
+              ? <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700"><CheckCircle size={9} /> Certified</span>
+              : <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#F1F5F9] text-[#94A3B8]">Pending Certification</span>}
           </div>
-        )}
+
+          {/* Access via */}
+          <p className="text-[10px] text-[#9BA8BA] font-semibold mb-1.5">Access via:</p>
+          <div className="flex flex-wrap gap-1">
+            {ACCESS_CHANNELS.map(ch => (
+              <span key={ch.label} className="px-2 py-0.5 rounded-md text-[10px] font-semibold" style={{ background: ch.bg, color: ch.text }}>{ch.label}</span>
+            ))}
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 mt-auto">
+          <button
+            onClick={e => { e.stopPropagation(); onDeploy?.(agent) }}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-xs font-bold text-white transition-all hover:opacity-90 active:scale-[0.98]"
+            style={{ background: '#1A2340' }}
+          >
+            <ArrowUpRight size={12} /> Deploy
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); onClick?.() }}
+            className="px-3.5 py-2 rounded-xl text-xs font-semibold text-[#4A5568] bg-white border border-[#E2E8F0] hover:bg-[#F7F8FA] transition-all"
+          >
+            Details
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+/* ── Compact list row (Agents list view) ── */
+function AgentListRow({ agent, onClick, onDeploy }) {
+  const isApproved = agent.status === 'active' || agent.status === 'approved'
+  const CatIcon = AGENT_CATEGORY_ICON[agent.category] || Bot
+  const kya = estimateKYA(agent)
+  return (
+    <div onClick={onClick}
+      className="flex items-center gap-4 px-4 py-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#CBD5E0] hover:shadow-sm transition-all cursor-pointer">
+      <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#1A2340' }}>
+        <CatIcon size={16} className="text-white" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="text-sm font-bold text-[#1A2340] truncate">{agent.name}</p>
+          <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold flex-shrink-0 ${isApproved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+            {isApproved ? 'PRODUCTION' : 'UNDER REVIEW'}
+          </span>
+        </div>
+        <p className="text-xs text-[#9BA8BA] truncate">{agent.category} &middot; {agent.description}</p>
+      </div>
+      <div className="hidden md:flex items-center gap-5 flex-shrink-0">
+        <div className="text-center w-14"><p className="text-sm font-bold text-emerald-600">{agent.successRate}%</p><p className="text-[9px] text-[#9BA8BA] uppercase">Accuracy</p></div>
+        <div className="text-center w-14"><p className="text-sm font-bold text-[#1A2340]">{estimateAvgTime(agent)}</p><p className="text-[9px] text-[#9BA8BA] uppercase">Avg Time</p></div>
+        <div className="text-center w-16"><p className="text-sm font-bold text-[#1A2340]">{(agent.tasksToday || 0).toLocaleString()}</p><p className="text-[9px] text-[#9BA8BA] uppercase">Daily</p></div>
+        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${kya >= 90 ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>{kya} KYA</span>
+      </div>
+      <button
+        onClick={e => { e.stopPropagation(); onDeploy?.(agent) }}
+        className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0 hover:opacity-90 transition-all"
+        style={{ background: '#1A2340' }}
+      >
+        <ArrowUpRight size={12} /> Deploy
+      </button>
+    </div>
+  )
+}
+
+/* ── Bundle Card ── */
+function BundleCard({ bundle, onClick }) {
+  const color = segColors[bundle.segmentKey] || '#C8102E'
+  return (
+    <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }} onClick={onClick}
+      className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden cursor-pointer hover:border-[#CBD5E0] hover:shadow-md transition-all">
+      <div className="h-1" style={{ background: color }} />
+      <div className="p-4">
+        <div className="flex items-start justify-between mb-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15` }}>
+            <Package size={17} style={{ color }} />
+          </div>
+          {bundle.status === 'incomplete'
+            ? <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Under Review</span>
+            : <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Ready</span>}
+        </div>
+        <p className="text-sm font-bold text-[#1A2340] leading-tight">{bundle.name}</p>
+        <p className="text-xs text-[#718096] mt-1.5 line-clamp-2 leading-relaxed">{bundle.description}</p>
+        <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[#F0F2F5]">
+          <span className="flex items-center gap-1.5 text-xs text-[#4A5568]"><Bot size={12} className="text-[#9BA8BA]" /> {bundle.agentCount} agents</span>
+          <span className="flex items-center gap-1.5 text-xs text-[#4A5568]"><Plug size={12} className="text-[#9BA8BA]" /> {bundle.toolCount} tools</span>
+          <ChevronRight size={13} className="text-[#CBD5E0] ml-auto" />
+        </div>
       </div>
     </motion.div>
   )
@@ -1149,10 +1311,13 @@ function AuthorDashboard({ allAgents, allWorkflows, allTools }) {
    MAIN PAGE
    ══════════════════════════════════════════════════════════════════════════════ */
 export default function AgentPool() {
+  const navigate    = useNavigate()
   const location    = useLocation()
   const storeBuilt        = useStore(s => s.builtAgents)
   const pendingWorkflows  = useStore(s => s.pendingWorkflows) || []
   const platformApprovals = useStore(s => s.platformApprovals) || {}
+  const addToast          = useStore(s => s.addToast)
+  const deployWorkflow    = useStore(s => s.deployWorkflow)
   const [tab,            setTab]            = useState('workflows')
   const [statusFilter,   setStatusFilter]   = useState('all')
   const [wfStatusFilter, setWfStatusFilter] = useState('all')
@@ -1161,12 +1326,30 @@ export default function AgentPool() {
   const [agSearch,  setAgSearch]  = useState('')
   const [toolSearch,setToolSearch]= useState('')
   const [toolCat,   setToolCat]   = useState('All')
+  const [toolTile,  setToolTile]  = useState('connectors')  // 'connectors' | 'ai' | 'mcp'
+  const [agentView, setAgentView] = useState('grid')        // 'grid' | 'list'
+  const [bundleSearch, setBundleSearch] = useState('')
   const [detailWf,   setDetailWf]   = useState(null)
   const [detailAg,   setDetailAg]   = useState(null)
   const [detailTool, setDetailTool] = useState(null)
   const [importedWorkflows, setImportedWorkflows] = useState([])
   const [evaluateWf, setEvaluateWf] = useState(null)
   const importInputRef = useRef(null)
+
+  const TOOL_TILE_GROUPS = {
+    connectors: { label: 'Connectors',  categories: ['Connector', 'Third-Party', 'Data'], color: '#10B981' },
+    ai:         { label: 'AI Tools',    categories: ['AI/ML'],                            color: '#8B5CF6' },
+    mcp:        { label: 'MCP Servers', categories: ['MCP'],                              color: '#7C3AED' },
+  }
+
+  const handleDeployAgent = (agent) => {
+    addToast({ type: 'success', title: 'Agent deployed', message: `${agent.name} is now live and processing tasks.` })
+  }
+
+  const handleDeployWorkflow = (wf) => {
+    deployWorkflow(wf)
+    addToast({ type: 'success', title: 'Workflow submitted', message: `${wf.name} is pending approval — visible in Governance Registry.` })
+  }
 
   const highlightId    = location.state?.highlightId    || null
   const highlightAgent = location.state?.highlightAgent || null
@@ -1211,12 +1394,12 @@ export default function AgentPool() {
     }
   }, [highlightAgent])
 
-  /* Reset search + filters when tab changes */
+  /* Reset search + filters when tab (or tool tile group) changes */
   useEffect(() => {
-    setWfSearch(''); setAgSearch(''); setToolSearch(''); setToolCat('All')
+    setWfSearch(''); setAgSearch(''); setToolSearch(''); setToolCat('All'); setBundleSearch('')
     setWfStatusFilter('all'); setStatusFilter('all'); setToolStatusFilter('all')
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [tab])
+  }, [tab, toolTile])
 
 
   /* Merge imported + pending + static workflows */
@@ -1272,16 +1455,21 @@ export default function AgentPool() {
       : (a.status === 'active' || a.status === 'approved')
     return matchSearch && matchStatus
   })
-  const toolCategories = ['All', ...Array.from(new Set(TOOLS_MCP.map(t => t.category)))]
+  const activeToolGroup = TOOL_TILE_GROUPS[toolTile] || TOOL_TILE_GROUPS.connectors
+  const toolCategories = ['All', ...activeToolGroup.categories]
   const filteredTools = TOOLS_MCP.filter(t => {
+    const mGroup = activeToolGroup.categories.includes(t.category)
     const mCat = toolCat === 'All' || t.category === toolCat
     const mSearch = !toolSearch || t.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
       t.provider.toLowerCase().includes(toolSearch.toLowerCase())
     const mStatus = toolStatusFilter === 'all' ? true
       : toolStatusFilter === 'under-review' ? t.status === 'warning'
       : t.status === 'connected'
-    return mCat && mSearch && mStatus
+    return mGroup && mCat && mSearch && mStatus
   })
+  const filteredBundles = BUNDLES.filter(b =>
+    !bundleSearch || b.name.toLowerCase().includes(bundleSearch.toLowerCase()) || b.segment.toLowerCase().includes(bundleSearch.toLowerCase())
+  )
 
   /* Pipeline → Agent profile navigation */
   const handleViewAgent = (agentName) => {
@@ -1344,19 +1532,33 @@ export default function AgentPool() {
   }
 
   /* Summary stats */
-  const liveCount       = allDisplayWorkflows.filter(w => w.status === 'live').length
-  const incompleteCount = allDisplayWorkflows.filter(w => w.status === 'incomplete' || w.status === 'rejected').length
   const activeAgents    = allAgents.filter(a => a.status === 'active').length
-  const connectedTools  = TOOLS_MCP.filter(t => t.status === 'connected').length
+  const dailyExecutions = allAgents.reduce((sum, a) => sum + (a.tasksToday || 0), 0)
+  const avgAccuracy     = allAgents.length
+    ? (allAgents.reduce((sum, a) => sum + (a.successRate || 0), 0) / allAgents.length)
+    : 0
 
-  /* Tab config */
-  const TABS = [
-    { key: 'workflows',  label: 'Workflows',        value: allDisplayWorkflows.length, sub: `${liveCount} approved · ${incompleteCount} under review`, icon: GitMerge,        color: '#C8102E' },
-    { key: 'agents',     label: 'Individual Agents', value: allAgents.length,          sub: `${activeAgents} approved`,                                  icon: Bot,             color: '#0EA5E9' },
-    { key: 'tools',      label: 'Tools & MCPs',      value: TOOLS_MCP.length,          sub: `${connectedTools} connected`,                               icon: Plug,            color: '#8B5CF6' },
-    { key: 'dashboard',  label: 'Dashboard',         value: null,                      sub: 'authors & artifacts',                                       icon: LayoutDashboard, color: '#10B981' },
+  /* Discover Hub category tiles */
+  const connectorsCount = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.connectors.categories.includes(t.category)).length
+  const aiToolsCount    = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.ai.categories.includes(t.category)).length
+  const mcpCount        = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.mcp.categories.includes(t.category)).length
+
+  const TILES = [
+    { key: 'agents',     label: 'Agents',      icon: Bot,             color: '#0EA5E9', count: allAgents.length,
+      active: tab === 'agents',                                onClick: () => setTab('agents') },
+    { key: 'workflows',  label: 'Use Cases',   icon: GitMerge,        color: '#C8102E', count: allDisplayWorkflows.length,
+      active: tab === 'workflows',                             onClick: () => setTab('workflows') },
+    { key: 'connectors', label: 'Connectors',  icon: Plug,            color: TOOL_TILE_GROUPS.connectors.color, count: connectorsCount,
+      active: tab === 'tools' && toolTile === 'connectors',    onClick: () => { setTab('tools'); setToolTile('connectors') } },
+    { key: 'ai',         label: 'AI Tools',    icon: Cpu,             color: TOOL_TILE_GROUPS.ai.color, count: aiToolsCount,
+      active: tab === 'tools' && toolTile === 'ai',            onClick: () => { setTab('tools'); setToolTile('ai') } },
+    { key: 'mcp',        label: 'MCP Servers', icon: Server,          color: TOOL_TILE_GROUPS.mcp.color, count: mcpCount,
+      active: tab === 'tools' && toolTile === 'mcp',           onClick: () => { setTab('tools'); setToolTile('mcp') } },
+    { key: 'bundles',    label: 'Bundles',     icon: Package,         color: '#F59E0B', count: BUNDLES.length,
+      active: tab === 'bundles',                               onClick: () => setTab('bundles') },
+    { key: 'dashboard',  label: 'Dashboard',   icon: LayoutDashboard, color: '#10B981', count: null,
+      active: tab === 'dashboard',                             onClick: () => setTab('dashboard') },
   ]
-  const activeTab = TABS.find(t => t.key === tab)
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
@@ -1388,14 +1590,45 @@ export default function AgentPool() {
       {/* Hidden file input for import */}
       <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
 
-      {/* ── Page Header ── */}
-      <div className="mb-6">
-        <p className="text-sm text-[#718096]">Explore workflows, individual agents and tool integrations available across Deluxe business segments</p>
+      {/* ── Page Header / Banner ── */}
+      <div className="rounded-2xl px-6 py-4 mb-4 relative overflow-hidden"
+        style={{ background: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)' }}>
+        <div className="flex items-center justify-between gap-4 flex-wrap relative">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+              <Globe size={18} className="text-white" />
+            </div>
+            <div>
+              <div className="flex items-baseline gap-2 flex-wrap">
+                <h1 className="text-white font-display text-lg font-bold">Discover Hub</h1>
+                <p className="text-white/50 text-xs">Enterprise AI Assets &middot; Agents &middot; Tools &middot; Integrations</p>
+              </div>
+              <div className="flex items-center gap-5 flex-wrap mt-1">
+                <span className="flex items-center gap-1.5 text-xs text-white/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
+                  <span className="font-bold text-white">{activeAgents}</span> Production Agents
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/80">
+                  <Activity size={11} className="text-emerald-400 flex-shrink-0" />
+                  <span className="font-bold text-white">{dailyExecutions >= 1000 ? (dailyExecutions / 1000).toFixed(1) + 'K+' : dailyExecutions}</span> Daily Executions
+                </span>
+                <span className="flex items-center gap-1.5 text-xs text-white/80">
+                  <CheckCheck size={11} className="text-emerald-400 flex-shrink-0" />
+                  <span className="font-bold text-white">{avgAccuracy.toFixed(1)}%</span> Avg Accuracy
+                </span>
+              </div>
+            </div>
+          </div>
+          <button onClick={() => navigate('/builder')}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#1A2340] bg-white hover:bg-white/90 transition-all flex-shrink-0">
+            <Zap size={13} /> Create New Agent
+          </button>
+        </div>
       </div>
 
       {/* ── Tab nav strip — sticky ── */}
       <div
-        className="sticky top-0 z-20 -mx-6 px-6 py-3 mb-6"
+        className="sticky top-0 z-20 -mx-6 px-6 py-2.5 mb-4"
         style={{
           background: 'rgba(247,248,250,0.97)',
           backdropFilter: 'blur(12px)',
@@ -1404,45 +1637,32 @@ export default function AgentPool() {
           boxShadow: '0 4px 20px rgba(26,35,64,0.06)',
         }}
       >
-        <div className="grid grid-cols-4 gap-3">
-          {TABS.map((t, i) => {
-            const Icon     = t.icon
-            const isActive = tab === t.key
-            const isTab    = !!t.key
+        <div className="grid grid-cols-7 gap-2.5">
+          {TILES.map(t => {
+            const Icon = t.icon
             return (
-              <motion.div
-                key={i}
-                whileHover={isTab ? { y: -1 } : {}}
-                whileTap={isTab ? { scale: 0.97 } : {}}
-                onClick={isTab ? () => setTab(t.key) : undefined}
-                className="rounded-xl px-4 py-3 flex items-center gap-3 transition-all border"
+              <motion.button
+                key={t.key}
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={t.onClick}
+                className="rounded-xl px-3 py-2.5 text-left transition-all bg-white"
                 style={{
-                  cursor: isTab ? 'pointer' : 'default',
-                  background:   isActive ? t.color : 'white',
-                  borderColor:  isActive ? t.color : '#E2E8F0',
-                  boxShadow:    isActive ? `0 6px 20px ${t.color}30` : undefined,
-                  borderLeft:   !isActive && isTab ? `3px solid ${t.color}` : undefined,
+                  border: t.active ? `2px solid ${t.color}` : '1px solid #E2E8F0',
+                  boxShadow: t.active ? `0 4px 12px ${t.color}22` : undefined,
                 }}
               >
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ background: isActive ? 'rgba(255,255,255,0.2)' : `${t.color}12` }}>
-                  <Icon size={15} style={{ color: isActive ? 'white' : t.color }} />
+                <div className="flex items-center justify-between mb-2">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: t.active ? t.color : '#F1F5F9' }}>
+                    <Icon size={13} style={{ color: t.active ? 'white' : '#94A3B8' }} />
+                  </div>
+                  {t.count !== null && (
+                    <span className="text-base font-bold leading-none" style={{ color: t.active ? t.color : '#CBD5E0' }}>{t.count}</span>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  {t.value !== null
-                    ? <p className="text-lg font-bold leading-tight" style={{ color: isActive ? 'white' : '#1A2340' }}>{t.value}</p>
-                    : <p className="text-sm font-bold leading-tight" style={{ color: isActive ? 'white' : '#1A2340' }}>{t.label}</p>
-                  }
-                  {t.value !== null && <p className="text-[10px] truncate" style={{ color: isActive ? 'rgba(255,255,255,0.8)' : '#718096' }}>{t.label}</p>}
-                  <p className="text-[9px] truncate" style={{ color: isActive ? 'rgba(255,255,255,0.6)' : '#9BA8BA' }}>{t.sub}</p>
-                </div>
-                {isTab && !isActive && (
-                  <ChevronRight size={12} style={{ color: t.color }} className="opacity-50 flex-shrink-0" />
-                )}
-                {isActive && (
-                  <CheckCircle size={14} className="flex-shrink-0 text-white opacity-80" />
-                )}
-              </motion.div>
+                <p className="text-xs font-semibold truncate" style={{ color: t.active ? '#1A2340' : '#4A5568' }}>{t.label}</p>
+              </motion.button>
             )
           })}
         </div>
@@ -1507,9 +1727,10 @@ export default function AgentPool() {
                   )
                 })}
               </div>
-              <div className="grid grid-cols-1 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 {filteredWf.map(wf => (
-                  <WorkflowCard key={wf.id} wf={wf} isHighlighted={highlightId === wf.id} onClick={() => setDetailWf(wf)}
+                  <UseCaseTile key={wf.id} wf={wf} isHighlighted={highlightId === wf.id} onClick={() => setDetailWf(wf)}
+                    onDeploy={handleDeployWorkflow}
                     onEvaluate={wf.isImported ? () => setEvaluateWf(wf) : null} />
                 ))}
               </div>
@@ -1535,8 +1756,22 @@ export default function AgentPool() {
                 <div className="relative w-56">
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#718096]" />
                   <input value={agSearch} onChange={e => setAgSearch(e.target.value)}
-                    placeholder="Search agents…"
+                    placeholder="Search agents, tools, use cases…"
                     className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#0EA5E9]" />
+                </div>
+                <div className="flex items-center rounded-xl border border-[#E2E8F0] bg-white overflow-hidden flex-shrink-0">
+                  <button onClick={() => setAgentView('grid')}
+                    className="w-8 h-8 flex items-center justify-center transition-all"
+                    style={{ background: agentView === 'grid' ? '#EFF6FF' : 'white', color: agentView === 'grid' ? '#0EA5E9' : '#9BA8BA' }}
+                    aria-label="Grid view" title="Grid view">
+                    <GridIcon size={14} />
+                  </button>
+                  <button onClick={() => setAgentView('list')}
+                    className="w-8 h-8 flex items-center justify-center transition-all border-l border-[#E2E8F0]"
+                    style={{ background: agentView === 'list' ? '#EFF6FF' : 'white', color: agentView === 'list' ? '#0EA5E9' : '#9BA8BA' }}
+                    aria-label="List view" title="List view">
+                    <List size={14} />
+                  </button>
                 </div>
                 <button onClick={() => importInputRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
@@ -1570,11 +1805,19 @@ export default function AgentPool() {
                   )
                 })}
               </div>
-              <div className="grid grid-cols-3 gap-4">
-                {filteredAg.map(agent => (
-                  <AgentCard key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} />
-                ))}
-              </div>
+              {agentView === 'grid' ? (
+                <div className="grid grid-cols-3 gap-4">
+                  {filteredAg.map(agent => (
+                    <AgentCard key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} onDeploy={handleDeployAgent} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {filteredAg.map(agent => (
+                    <AgentListRow key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} onDeploy={handleDeployAgent} />
+                  ))}
+                </div>
+              )}
             </motion.div>
           )}
 
@@ -1585,11 +1828,11 @@ export default function AgentPool() {
               transition={{ duration: 0.2 }}>
               <div className="flex items-center gap-3 mb-5 flex-wrap">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#F5F3FF' }}>
-                    <Plug size={14} style={{ color: '#8B5CF6' }} />
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: `${activeToolGroup.color}15` }}>
+                    <Plug size={14} style={{ color: activeToolGroup.color }} />
                   </div>
                   <div>
-                    <p className="text-base font-bold text-[#1A2340]">Tools & MCP Integrations</p>
+                    <p className="text-base font-bold text-[#1A2340]">{activeToolGroup.label}</p>
                     <p className="text-xs text-[#718096]">APIs, connectors and MCP servers authorised for agent use</p>
                   </div>
                 </div>
@@ -1598,20 +1841,23 @@ export default function AgentPool() {
                   <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#718096]" />
                   <input value={toolSearch} onChange={e => setToolSearch(e.target.value)}
                     placeholder="Search tools…"
-                    className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#8B5CF6]" />
+                    className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none"
+                    style={{ borderColor: '#E2E8F0' }}
+                    onFocus={e => e.target.style.borderColor = activeToolGroup.color}
+                    onBlur={e => e.target.style.borderColor = '#E2E8F0'} />
                 </div>
                 <div className="flex gap-1.5 flex-wrap">
                   {toolCategories.map(c => (
                     <button key={c} onClick={() => setToolCat(c)}
                       className="px-3 py-1 rounded-full text-xs font-medium transition-all"
-                      style={toolCat === c ? { background: '#8B5CF6', color: 'white' } : { background: 'white', color: '#718096', border: '1px solid #E2E8F0' }}>
+                      style={toolCat === c ? { background: activeToolGroup.color, color: 'white' } : { background: 'white', color: '#718096', border: '1px solid #E2E8F0' }}>
                       {c}
                     </button>
                   ))}
                 </div>
                 <button onClick={() => importInputRef.current?.click()}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
-                  style={{ background: '#8B5CF6' }}>
+                  style={{ background: activeToolGroup.color }}>
                   <Upload size={12} />Import from Config
                 </button>
               </div>
@@ -1644,6 +1890,41 @@ export default function AgentPool() {
               <div className="grid grid-cols-4 gap-3">
                 {filteredTools.map(tool => (
                   <ToolCard key={tool.id} tool={tool} onClick={() => setDetailTool(tool)} />
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── TAB: BUNDLES ── */}
+          {tab === 'bundles' && (
+            <motion.div key="bundles"
+              initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
+              transition={{ duration: 0.2 }}>
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#FFFBEB' }}>
+                    <Package size={14} style={{ color: '#F59E0B' }} />
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-[#1A2340]">Bundles</p>
+                    <p className="text-xs text-[#718096]">Curated agent + tool packages that solve one use case end-to-end</p>
+                  </div>
+                </div>
+                <div className="flex-1" />
+                <div className="relative w-56">
+                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#718096]" />
+                  <input value={bundleSearch} onChange={e => setBundleSearch(e.target.value)}
+                    placeholder="Search bundles…"
+                    className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#F59E0B]" />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                {filteredBundles.map(bundle => (
+                  <BundleCard key={bundle.id} bundle={bundle}
+                    onClick={() => {
+                      const wf = allDisplayWorkflows.find(w => w.id === bundle.workflowId) || ALL_WORKFLOWS.find(w => w.id === bundle.workflowId)
+                      if (wf) setDetailWf(wf)
+                    }} />
                 ))}
               </div>
             </motion.div>

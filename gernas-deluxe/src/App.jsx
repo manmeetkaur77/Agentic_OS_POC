@@ -1,6 +1,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout              from './components/layout/Layout'
 import Dashboard           from './pages/Dashboard'
+import CommandCenter       from './pages/CommandCenter'
+import LiveOperations      from './pages/LiveOperations'
+import MultiAgentOrchestration from './pages/MultiAgentOrchestration'
 import AgentOrchestration  from './pages/AgentOrchestration'
 import MerchantOnboarding  from './pages/MerchantOnboarding'
 import PrintRetention      from './pages/PrintRetention'
@@ -21,6 +24,9 @@ export default function App() {
         <Route path="/" element={<Layout />}>
           <Route index element={<Navigate to="/studio" replace />} />
           <Route path="dashboard"      element={<Dashboard />} />
+          <Route path="command-center" element={<CommandCenter />} />
+          <Route path="live-operations" element={<LiveOperations />} />
+          <Route path="multi-agent-orchestration" element={<MultiAgentOrchestration />} />
           <Route path="orchestration"  element={<AgentOrchestration />} />
           <Route path="merchant"       element={<MerchantOnboarding />} />
           <Route path="print"          element={<PrintRetention />} />

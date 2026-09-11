@@ -3,6 +3,9 @@ import { useLocation } from 'react-router-dom'
 
 const breadcrumbs = {
   '/dashboard':    ['DLX_AGENTIC_OS', 'Homepage'],
+  '/command-center': ['DLX_AGENTIC_OS', 'Operations', 'Command Center'],
+  '/live-operations': ['DLX_AGENTIC_OS', 'Operations', 'Live Operations'],
+  '/multi-agent-orchestration': ['DLX_AGENTIC_OS', 'Build', 'Orchestration'],
   '/orchestration':['DLX_AGENTIC_OS', 'Workflow Orchestration'],
   '/merchant':     ['DLX_AGENTIC_OS', 'Merchant Services', 'Onboarding Workflow'],
   '/print':        ['DLX_AGENTIC_OS', 'Print', 'Churn Prevention'],

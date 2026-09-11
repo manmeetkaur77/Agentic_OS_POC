@@ -6,7 +6,7 @@ import {
   Bot, Zap, ArrowRight, Plus, Edit3, RotateCcw, Loader,
   TrendingUp, Users, Clock, DollarSign, ChevronRight, ChevronLeft, Upload, Lightbulb,
   Play, Terminal, ChevronDown, GitBranch, Search, Download, GitMerge, Layers,
-  X, Cpu
+  X, Cpu, Eye, File, Film, ScrollText, Mail, Ticket, MessageSquare
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
@@ -15,6 +15,36 @@ const EXAMPLE_PROMPTS = [
   "Our merchant onboarding takes 5–7 days — we need to cut that to under 24 hours",
   "We process 500+ invoices daily and our team spends 3 days matching payments manually",
   "We need real-time fraud detection across all merchant transactions",
+]
+
+// ─── Entry screen config ──────────────────────────────────────────────────────
+
+const ENTRY_OPTIONS = [
+  {
+    key: 'chat', icon: Sparkles,
+    title: 'Imagine a Process',
+    desc: 'Describe your transformation vision or business goal',
+  },
+  {
+    key: 'upload', icon: Upload,
+    title: 'Upload AOP / SOP / Workflow',
+    desc: 'Upload documentation (PDF, DOCX, PPTX, Visio, images)',
+  },
+  {
+    key: 'context', icon: Eye,
+    title: 'Capture Real Human Context',
+    desc: 'Reconstruct AS-IS from operational traces and behavior',
+  },
+]
+
+const UPLOAD_ACCEPT = '.pdf,.doc,.docx,.ppt,.pptx,.vsdx,.png,.jpg,.jpeg'
+
+const CONTEXT_SOURCES = [
+  { key: 'screen',   icon: Film,          label: 'Screen Recordings',       desc: 'Captured desktop sessions of the process being performed' },
+  { key: 'logs',      icon: ScrollText,    label: 'System Logs & Audit Trails', desc: 'Timestamps, actors and actions from source systems' },
+  { key: 'email',     icon: Mail,          label: 'Email Threads',           desc: 'Approval chains, escalations and handoffs over email' },
+  { key: 'tickets',   icon: Ticket,        label: 'Support Ticket History',  desc: 'Jira/ServiceNow tickets showing exceptions and rework' },
+  { key: 'slack',     icon: MessageSquare, label: 'Slack / Teams Threads',   desc: 'Ad-hoc coordination that never made it into an SOP' },
 ]
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -1468,6 +1498,13 @@ export default function ImagineStudio() {
   const [chatCollapsed, setChatCollapsed] = useState(false)
   const [pipelineCollapsed, setPipelineCollapsed] = useState(false)
 
+  // ── Entry screen ("How would you like to begin?") ──
+  const [entryChoice, setEntryChoice] = useState(() => (s?.messages?.length ? 'chat' : null))
+  const [uploadFile,  setUploadFile]  = useState(null)   // { name, size } | null
+  const [uploadStage, setUploadStage] = useState('idle') // idle | parsing | done
+  const uploadInputRef = useRef(null)
+  const [contextSelected, setContextSelected] = useState(new Set())
+
   const chatEndRef   = useRef(null)
   const inputRef     = useRef(null)
   const problemRef   = useRef('')   // captures the first user message for workflow analysis
@@ -1616,9 +1653,9 @@ export default function ImagineStudio() {
     }
   }
 
-  const handleSubmit = async () => {
-    if (!input.trim() || typing) return
-    const text = input.trim()
+  const handleSubmit = async (overrideText) => {
+    const text = (overrideText ?? input).trim()
+    if (!text || typing) return
     setInput('')
     pushMsg('user', text)
     if (phase === 0) {
@@ -2211,6 +2248,36 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
     setWorkflowResult(null)
     setBuiltSteps({}); setSkippedSteps({}); setSpecModal(null)
     problemRef.current = ''
+    setEntryChoice(null); setUploadFile(null); setUploadStage('idle'); setContextSelected(new Set())
+  }
+
+  // ── Upload flow: simulate parsing an uploaded AOP/SOP, then hand off to Nova ──
+  const handleUploadFile = (file) => {
+    if (!file) return
+    setUploadFile({ name: file.name, size: file.size })
+    setUploadStage('parsing')
+    setTimeout(() => {
+      setUploadStage('done')
+      setEntryChoice('chat')
+      const prompt = `I've uploaded our process documentation "${file.name}" — please extract the current workflow from it and identify where it can be automated.`
+      handleSubmit(prompt)
+    }, 1400)
+  }
+
+  // ── Human-context flow: synthesize a prompt from the selected trace sources ──
+  const toggleContextSource = (key) => {
+    setContextSelected(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+  const handleReconstructContext = () => {
+    const labels = CONTEXT_SOURCES.filter(c => contextSelected.has(c.key)).map(c => c.label)
+    if (!labels.length) return
+    setEntryChoice('chat')
+    const prompt = `Reconstruct our real AS-IS process from operational traces — specifically: ${labels.join(', ')}. Identify the actual steps people take (including workarounds), then tell me where it can be automated.`
+    handleSubmit(prompt)
   }
 
   const handleSendForApproval = () => {
@@ -2423,9 +2490,150 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-          {/* Idle state */}
-          {phase === 0 && messages.length === 0 && (
+          {/* ── Entry screen: "How would you like to begin?" ── */}
+          {phase === 0 && messages.length === 0 && !entryChoice && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto py-6">
+              <div className="text-center mb-7">
+                <div className="w-12 h-12 rounded-2xl bg-[#EEF1FB] flex items-center justify-center mx-auto mb-4">
+                  <Sparkles size={22} className="text-[#1A2340]" />
+                </div>
+                <h2 className="text-xl font-bold text-[#1A2340]">How would you like to begin?</h2>
+                <p className="text-sm text-[#718096] mt-1.5">Transform manual processes into AI-powered workflows in minutes</p>
+              </div>
+              <div className="flex flex-col gap-3">
+                {ENTRY_OPTIONS.map(opt => {
+                  const Icon = opt.icon
+                  return (
+                    <button
+                      key={opt.key}
+                      onClick={() => setEntryChoice(opt.key)}
+                      className="group w-full flex items-center gap-3.5 px-4 py-4 rounded-2xl border border-[#E2E8F0] bg-white hover:border-[#C8102E] hover:shadow-[0_4px_16px_rgba(200,16,46,0.08)] transition-all text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-[#F7F8FA] group-hover:bg-[#FDF0F2] flex items-center justify-center flex-shrink-0 transition-all">
+                        <Icon size={17} className="text-[#9BA8BA] group-hover:text-[#C8102E] transition-all" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold text-[#1A2340]">{opt.title}</p>
+                        <p className="text-xs text-[#718096] mt-0.5 leading-relaxed">{opt.desc}</p>
+                      </div>
+                      <ChevronRight size={16} className="text-[#CBD5E0] group-hover:text-[#C8102E] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                    </button>
+                  )
+                })}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Upload AOP / SOP / Workflow ── */}
+          {phase === 0 && messages.length === 0 && entryChoice === 'upload' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto py-6">
+              <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-xs text-[#9BA8BA] hover:text-[#1A2340] mb-5">
+                <ChevronLeft size={13} /> Back
+              </button>
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-[#EEF1FB] flex items-center justify-center mx-auto mb-4">
+                  <Upload size={20} className="text-[#1A2340]" />
+                </div>
+                <h2 className="text-lg font-bold text-[#1A2340]">Upload AOP / SOP / Workflow</h2>
+                <p className="text-sm text-[#718096] mt-1.5">PDF, DOCX, PPTX, Visio or images — Nova will extract the process for you</p>
+              </div>
+
+              <input ref={uploadInputRef} type="file" accept={UPLOAD_ACCEPT} className="hidden"
+                onChange={e => handleUploadFile(e.target.files?.[0])} />
+
+              {uploadStage === 'idle' && (
+                <div
+                  onClick={() => uploadInputRef.current?.click()}
+                  onDragOver={e => e.preventDefault()}
+                  onDrop={e => { e.preventDefault(); handleUploadFile(e.dataTransfer.files?.[0]) }}
+                  className="rounded-2xl border-2 border-dashed border-[#CBD5E0] hover:border-[#C8102E] hover:bg-[#FDF0F2] transition-all cursor-pointer px-6 py-10 text-center"
+                >
+                  <Upload size={24} className="text-[#9BA8BA] mx-auto mb-3" />
+                  <p className="text-sm font-semibold text-[#4A5568]">Drop a file here, or click to browse</p>
+                  <p className="text-xs text-[#9BA8BA] mt-1">Max 25MB &middot; {UPLOAD_ACCEPT.split(',').join(' ')}</p>
+                </div>
+              )}
+
+              {uploadStage !== 'idle' && uploadFile && (
+                <div className="rounded-2xl border border-[#E2E8F0] bg-[#F7F8FA] px-4 py-4 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E2E8F0] flex items-center justify-center flex-shrink-0">
+                    <File size={16} className="text-[#4A5568]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-[#1A2340] truncate">{uploadFile.name}</p>
+                    <p className="text-xs text-[#718096] mt-0.5">
+                      {uploadStage === 'parsing' ? 'Extracting process steps…' : 'Extracted — handing off to Nova'}
+                    </p>
+                  </div>
+                  {uploadStage === 'parsing'
+                    ? <Loader size={16} className="text-[#C8102E] animate-spin flex-shrink-0" />
+                    : <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />}
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* ── Capture Real Human Context ── */}
+          {phase === 0 && messages.length === 0 && entryChoice === 'context' && (
+            <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="max-w-md mx-auto py-6">
+              <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-xs text-[#9BA8BA] hover:text-[#1A2340] mb-5">
+                <ChevronLeft size={13} /> Back
+              </button>
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-[#EEF1FB] flex items-center justify-center mx-auto mb-4">
+                  <Eye size={20} className="text-[#1A2340]" />
+                </div>
+                <h2 className="text-lg font-bold text-[#1A2340]">Capture Real Human Context</h2>
+                <p className="text-sm text-[#718096] mt-1.5">Pick the operational traces available — Nova reconstructs what people actually do</p>
+              </div>
+
+              <div className="flex flex-col gap-2 mb-4">
+                {CONTEXT_SOURCES.map(src => {
+                  const Icon = src.icon
+                  const active = contextSelected.has(src.key)
+                  return (
+                    <button
+                      key={src.key}
+                      onClick={() => toggleContextSource(src.key)}
+                      className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl border text-left transition-all"
+                      style={active
+                        ? { borderColor: '#C8102E', background: '#FDF0F2' }
+                        : { borderColor: '#E2E8F0', background: 'white' }}
+                    >
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                        style={{ background: active ? '#C8102E' : '#F7F8FA' }}>
+                        <Icon size={14} style={{ color: active ? 'white' : '#9BA8BA' }} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold text-[#1A2340]">{src.label}</p>
+                        <p className="text-xs text-[#9BA8BA] mt-0.5 leading-snug">{src.desc}</p>
+                      </div>
+                      <div className="w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border"
+                        style={{ borderColor: active ? '#C8102E' : '#CBD5E0', background: active ? '#C8102E' : 'transparent' }}>
+                        {active && <CheckCircle size={10} className="text-white" />}
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+
+              <button
+                onClick={handleReconstructContext}
+                disabled={contextSelected.size === 0}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-40 hover:opacity-90"
+                style={{ background: '#1A2340' }}
+              >
+                <Eye size={14} /> Reconstruct Process {contextSelected.size > 0 && `(${contextSelected.size} source${contextSelected.size > 1 ? 's' : ''})`}
+              </button>
+            </motion.div>
+          )}
+
+          {/* Idle state — chat mode */}
+          {phase === 0 && messages.length === 0 && entryChoice === 'chat' && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4 pt-2">
+              <button onClick={() => setEntryChoice(null)} className="flex items-center gap-1 text-xs text-[#9BA8BA] hover:text-[#1A2340]">
+                <ChevronLeft size={13} /> Back
+              </button>
               <div className="text-center py-3">
                 <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto mb-3">
                   <Sparkles size={22} className="text-amber-500" />

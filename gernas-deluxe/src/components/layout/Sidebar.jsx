@@ -1,15 +1,19 @@
 import { NavLink } from 'react-router-dom'
 import {
   Shield, Hammer,
-  Sparkles, Layers
+  Sparkles, Layers, LayoutGrid, Activity, Network
 } from 'lucide-react'
 
 const navItems = [
+  { divider: true, label: 'OPERATIONS' },
+  { path: '/command-center',  label: 'Command Center',  icon: LayoutGrid, badge: null },
+  { path: '/live-operations', label: 'Live Operations',  icon: Activity,   badge: null },
   { divider: true, label: 'DISCOVER' },
   { path: '/studio',       label: 'Imagination Studio', icon: Sparkles,        badge: 'AI',     accent: '#F59E0B' },
   { path: '/agent-pool',   label: 'Discover Hub',           icon: Layers,          badge: null },
   { divider: true, label: 'BUILD' },
   { path: '/builder',       label: 'Solution Builder',       icon: Hammer,          badge: 'new', accent: '#F59E0B' },
+  { path: '/multi-agent-orchestration', label: 'Orchestration', icon: Network,      badge: null },
   { divider: true, label: 'PLATFORM' },
   { path: '/governance',   label: 'Governance Registry', icon: Shield,          badge: null },
 ]

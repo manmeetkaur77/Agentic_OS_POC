@@ -8,16 +8,17 @@ import {
 } from 'lucide-react'
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import useStore from '../store/useStore'
+import { activeAgentCount, uptimePct, errorRatePct, latencyMs, dailyExecutions, agentByName } from '../data/platformData'
 
 /* ══════════════════════════════════════════════════════════════════════════════
    MOCK DATA — built from agents/tools that already exist in Discover Hub
    ══════════════════════════════════════════════════════════════════════════════ */
 
 const QUICK_ACTIONS = [
-  { key: 'traces',   label: 'Opik Traces',    icon: Activity },
-  { key: 'governance', label: 'Governance',   icon: Shield },
-  { key: 'quality',  label: 'Quality',        icon: Flag },
-  { key: 'workflow', label: 'Create Workflow', icon: GitMerge },
+  { key: 'maker-checker', label: 'Maker-Checker',  icon: Flag },
+  { key: 'approval',      label: 'Approval Centre', icon: Shield },
+  { key: 'incidents',     label: 'Incidents',       icon: Activity },
+  { key: 'workflow',      label: 'Create Workflow', icon: GitMerge },
 ]
 
 const KERNEL_LEFT = [
@@ -40,17 +41,23 @@ const FLAG_STYLE = {
   error:    { label: 'ERROR PRONE',            bg: 'bg-red-100',     text: 'text-red-700',     name: 'text-red-700'     },
 }
 
-const EXECUTION_DATA = [
-  { t: '09:00', v: 180 }, { t: '10:00', v: 340 }, { t: '11:00', v: 460 },
-  { t: '12:00', v: 610 }, { t: '13:00', v: 740 }, { t: '14:00', v: 980 },
-  { t: '15:00', v: 1150 },
-]
+// Scaled so the peak lines up with the platform's real total daily volume
+const executionPeak = Math.round(dailyExecutions / 24 * 1.1)
+const EXECUTION_DATA = [0.16, 0.30, 0.40, 0.53, 0.64, 0.85, 1.0].map((f, i) => ({
+  t: `${String(9 + i).padStart(2, '0')}:00`, v: Math.round(executionPeak * f),
+}))
+
+// Rolled up from the four agents actually shown in the collaboration diagram above
+const kernelAgents = [...KERNEL_LEFT, ...KERNEL_RIGHT].map(n => agentByName(n.label))
+const avgUptime  = kernelAgents.reduce((n, a) => n + uptimePct(a), 0) / kernelAgents.length
+const avgErrorPct = kernelAgents.reduce((n, a) => n + errorRatePct(a), 0) / kernelAgents.length
+const avgLatency = kernelAgents.reduce((n, a) => n + latencyMs(a), 0) / kernelAgents.length
 
 const PROCESS_HEALTH = [
-  { label: 'Uptime',       value: '99.9%', bg: '#F0FDF4', color: '#059669' },
-  { label: 'Avg Latency',  value: '45ms',  bg: '#EFF6FF', color: '#1D4ED8' },
-  { label: 'Error Rate',   value: '0.3%',  bg: '#FFFBEB', color: '#B45309' },
-  { label: 'Active Agents', value: '128',  bg: '#F5F3FF', color: '#7C3AED' },
+  { label: 'Uptime',        value: `${avgUptime.toFixed(1)}%`,   bg: '#F0FDF4', color: '#059669' },
+  { label: 'Avg Latency',   value: `${Math.round(avgLatency)}ms`, bg: '#EFF6FF', color: '#1D4ED8' },
+  { label: 'Error Rate',    value: `${avgErrorPct.toFixed(2)}%`, bg: '#FFFBEB', color: '#B45309' },
+  { label: 'Active Agents', value: String(activeAgentCount),     bg: '#F5F3FF', color: '#7C3AED' },
 ]
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -148,10 +155,10 @@ export default function LiveOperations() {
   const notify = (title, message) => addToast({ type: 'info', title, message })
 
   const handleQuickAction = (key) => {
-    if (key === 'governance') return navigate('/governance')
-    if (key === 'workflow')   return navigate('/studio')
-    if (key === 'traces')     return notify('Opik Traces', 'Deep-dive tracing view is coming to this workspace soon.')
-    if (key === 'quality')    return notify('Quality Assurance', 'A dedicated Quality Assurance dashboard is coming soon.')
+    if (key === 'approval')      return navigate('/approval-centre')
+    if (key === 'workflow')      return navigate('/studio')
+    if (key === 'maker-checker') return navigate('/maker-checker')
+    if (key === 'incidents')     return navigate('/incident-management')
   }
 
   return (

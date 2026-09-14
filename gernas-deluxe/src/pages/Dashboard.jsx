@@ -8,31 +8,21 @@ import {
   Cpu, Tag, Layers, ChevronRight, Terminal
 } from 'lucide-react'
 import useStore from '../store/useStore'
+import { liveWorkflows, activeAgentCount, agentCount as totalAgentCount, INDIVIDUAL_AGENTS, uptimePct } from '../data/platformData'
 
-/* ─── Hardcoded live workflows ───────────────────────────────────────────────── */
-const LIVE_WORKFLOWS = [
-  {
-    id:          'wf-002',
-    name:        'Invoice-to-Cash Reconciliation',
-    description: 'Invoice ingestion → PO matching → GL posting → exception handling',
-    segmentKey:  'b2b',
-    segment:     'B2B Payments',
-    agentCount:  4,
-    sla:         97.8,
-    tasksToday:  289,
-    lastRun:     '8 min ago',
-    avgRunTime:  '2.8 min',
-    status:      'live',
-    trigger:     'Invoice Received (Email / EDI)',
-    output:      'Payment Cleared — Ledger Updated',
-    agents: [
-      { id: 'b1', name: 'Invoice Ingestion Agent', role: 'Parses & classifies incoming invoices from email and EDI feeds',  tools: ['ocr-parser', 'email-inbox', 'edi-reader'],  status: 'full' },
-      { id: 'b2', name: 'PO Matching Engine',      role: 'Matches invoices to purchase orders using fuzzy matching',       tools: ['erp-read', 'match-algo', 'gl-lookup'],      status: 'full' },
-      { id: 'b3', name: 'GL Posting Agent',        role: 'Posts matched invoices to general ledger with audit trail',      tools: ['gl-write', 'audit-log', 'erp-write'],       status: 'full' },
-      { id: 'b4', name: 'Exception Handler',       role: 'Flags unmatched invoices & routes to finance team for review',   tools: ['notify-send', 'ticket-create', 'jira-api'], status: 'partial' },
-    ],
-  },
-]
+/* ─── Live workflows — the real, currently-live records from the catalog, so this
+   panel can never show a workflow as "live" that Discover Hub calls incomplete ─── */
+const LIVE_WORKFLOWS = liveWorkflows.map(wf => ({
+  id: wf.id, name: wf.name, description: wf.description,
+  segmentKey: wf.segmentKey, segment: wf.segment,
+  agentCount: wf.agents.length, sla: wf.sla, tasksToday: wf.tasksPerDay,
+  lastRun: wf.lastRun, avgRunTime: wf.avgRunTime, status: wf.status,
+  trigger: wf.trigger, output: wf.output,
+  agents: wf.agents.map(a => ({ ...a, status: 'full' })),
+}))
+
+// Fleet-wide uptime — average of the same per-agent formula used on Live Operations
+const fleetUptime = (INDIVIDUAL_AGENTS.reduce((n, a) => n + uptimePct(a), 0) / INDIVIDUAL_AGENTS.length).toFixed(2)
 
 const WF_SEG_COLORS = {
   merchant: '#0EA5E9',
@@ -865,7 +855,7 @@ const item      = { hidden: { opacity: 0, y: 14 }, show: { opacity: 1, y: 0, tra
 /* ─── Dashboard ──────────────────────────────────────────────────────────────── */
 export default function Dashboard() {
   const navigate = useNavigate()
-  const { metrics, pendingWorkflows, addPendingWorkflow, builtAgents = [], platformApprovals = {} } = useStore()
+  const { pendingWorkflows, addPendingWorkflow, builtAgents = [], platformApprovals = {} } = useStore()
   const [uploadedConfig,  setUploadedConfig]  = useState(null)
   const [approvalSent,    setApprovalSent]    = useState(false)
   const [selectedLiveWf,  setSelectedLiveWf]  = useState(null)
@@ -906,16 +896,6 @@ export default function Dashboard() {
     setUploadedConfig(null)
     setApprovalSent(false)
   }
-
-  if (!metrics) {
-    return (
-      <div className="grid grid-cols-3 gap-4">
-        {[...Array(3)].map((_, i) => <div key={i} className="card p-5 h-28 skeleton" />)}
-      </div>
-    )
-  }
-
-  const ov = metrics.overview
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -1030,9 +1010,9 @@ export default function Dashboard() {
             <p className="text-white/40 text-xs mb-1">System Status</p>
             <div className="flex items-center gap-2 justify-end">
               <span className="agent-pulse w-2 h-2 rounded-full bg-emerald-400 inline-block" />
-              <span className="text-emerald-400 text-sm font-semibold">{ov.uptimePercent}% Uptime</span>
+              <span className="text-emerald-400 text-sm font-semibold">{fleetUptime}% Uptime</span>
             </div>
-            <p className="text-white/40 text-xs mt-1">{ov.activeAgents} of {ov.totalAgents} agents active</p>
+            <p className="text-white/40 text-xs mt-1">{activeAgentCount} of {totalAgentCount} agents active</p>
           </div>
         </div>
       </motion.div>

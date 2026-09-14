@@ -176,11 +176,14 @@ export default function AgentOrchestration() {
     return () => clearInterval(iv)
   }, [])
 
+  // "Agents Executing" is a runtime/topology state (is this node processing right now),
+  // deliberately distinct from the platform-wide "36 active" approval count shown
+  // elsewhere — this panel tracks only the 6 legacy nodes in the topology below.
   const kpis = [
-    { label: 'Tasks / Hour',  value: '847',   sub: '+12% vs yesterday', icon: Activity,    color: '#C8102E' },
-    { label: 'Active Agents', value: '5 / 6', sub: '1 standby',         icon: Zap,         color: '#10B981' },
-    { label: 'Success Rate',  value: '98.4%', sub: '+0.3% this week',   icon: CheckCircle, color: '#10B981' },
-    { label: 'Avg Latency',   value: '1.2s',  sub: 'P50 — −80ms',       icon: Clock,       color: '#0EA5E9' },
+    { label: 'Tasks / Hour',       value: '847',   sub: '+12% vs yesterday', icon: Activity,    color: '#C8102E' },
+    { label: 'Agents Executing',   value: '5 / 6', sub: '1 idle',            icon: Zap,         color: '#10B981' },
+    { label: 'Success Rate',       value: '98.4%', sub: '+0.3% this week',   icon: CheckCircle, color: '#10B981' },
+    { label: 'Avg Latency',        value: '1.2s',  sub: 'P50 — −80ms',       icon: Clock,       color: '#0EA5E9' },
   ]
 
   const pipelineTotal = PIPELINE.reduce((s, p) => s + p.value, 0)

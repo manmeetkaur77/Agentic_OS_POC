@@ -1,21 +1,33 @@
 import { NavLink } from 'react-router-dom'
 import {
-  Shield, Hammer,
-  Sparkles, Layers, LayoutGrid, Activity, Network
+  Layers, Hammer, Network, Sparkles,
+  LayoutGrid, Activity, Users, AlertOctagon,
+  Shield, ShieldCheck,
+  Terminal, KeyRound,
 } from 'lucide-react'
 
+// Matches the platform architecture exactly: 4 groups, 12 components. Nothing here
+// that isn't one of the twelve — see "Agentic OS: Components" for the source of truth.
 const navItems = [
+  { divider: true, label: 'BUILD & CATALOG' },
+  { path: '/agent-pool',         label: 'Discover Hub',       icon: Layers,   badge: null },
+  { path: '/builder',            label: 'Agent Builder',      icon: Hammer,   badge: null },
+  { path: '/agent-orchestrator', label: 'Agent Orchestrator', icon: Network,  badge: null },
+  { path: '/studio',             label: 'Imagination Studio', icon: Sparkles, badge: 'AI', accent: '#F59E0B' },
+
   { divider: true, label: 'OPERATIONS' },
-  { path: '/command-center',  label: 'Command Center',  icon: LayoutGrid, badge: null },
-  { path: '/live-operations', label: 'Live Operations',  icon: Activity,   badge: null },
-  { divider: true, label: 'DISCOVER' },
-  { path: '/studio',       label: 'Imagination Studio', icon: Sparkles,        badge: 'AI',     accent: '#F59E0B' },
-  { path: '/agent-pool',   label: 'Discover Hub',           icon: Layers,          badge: null },
-  { divider: true, label: 'BUILD' },
-  { path: '/builder',       label: 'Solution Builder',       icon: Hammer,          badge: 'new', accent: '#F59E0B' },
-  { path: '/multi-agent-orchestration', label: 'Orchestration', icon: Network,      badge: null },
-  { divider: true, label: 'PLATFORM' },
-  { path: '/governance',   label: 'Governance Registry', icon: Shield,          badge: null },
+  { path: '/command-center',      label: 'Command Center',      icon: LayoutGrid,   badge: null },
+  { path: '/live-operations',     label: 'Live Operations',     icon: Activity,     badge: null },
+  { path: '/maker-checker',       label: 'Maker-Checker',       icon: Users,        badge: 'HITL', accent: '#0EA5E9' },
+  { path: '/incident-management', label: 'Incident Management', icon: AlertOctagon, badge: null },
+
+  { divider: true, label: 'GOVERNANCE' },
+  { path: '/approval-centre', label: 'Approval Centre', icon: Shield,      badge: null },
+  { path: '/trust-control',   label: 'Trust & Control',  icon: ShieldCheck, badge: null },
+
+  { divider: true, label: 'SYSTEM INTERNALS' },
+  { path: '/os-console',  label: 'OS Console',              icon: Terminal, badge: null },
+  { path: '/user-access', label: 'User & Access Management', icon: KeyRound, badge: null },
 ]
 
 export default function Sidebar() {

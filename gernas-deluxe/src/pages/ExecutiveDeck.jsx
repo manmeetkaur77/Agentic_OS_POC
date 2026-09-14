@@ -2,14 +2,16 @@ import { motion } from 'framer-motion'
 import { Download } from 'lucide-react'
 import useStore from '../store/useStore'
 import SavingsBar from '../components/charts/SavingsBar'
+import { storyline, activeAgentCount, avgAccuracy, totalCostAvoided, formatMoney } from '../data/platformData'
 
-const comparisons = [
-  { process: 'Merchant Onboarding',  before: '5–7 days',  after: '2.3 hours',  reduction: '97%' },
-  { process: 'Invoice Reconciliation', before: '3 days',  after: '48 minutes', reduction: '99%' },
-  { process: 'Churn Detection',       before: '90 days',  after: '12 days',    reduction: '87%' },
-  { process: 'Data Enrichment',       before: '2 weeks',  after: '4 hours',    reduction: '96%' },
-  { process: 'Fraud Response',        before: '24 hours', after: '< 1 minute', reduction: '99%' },
-]
+// Real workflow name + real avgRunTime + real SLA — the same five journeys and the
+// same figures shown on Discover Hub, Command Center and Multi-Agent Orchestration.
+const comparisons = storyline.map(s => ({
+  process: s.name,
+  before: s.before.value,
+  after: s.workflow.avgRunTime,
+  automationRate: Math.round(s.workflow.sla),
+}))
 
 export default function ExecutiveDeck() {
   const { metrics, addToast } = useStore()
@@ -40,6 +42,21 @@ export default function ExecutiveDeck() {
         >
           <Download size={14} /> Download Executive Summary
         </button>
+
+        <div className="relative flex items-center justify-center gap-10 mt-8 pt-6 border-t border-white/10 flex-wrap">
+          <div className="text-center">
+            <p className="font-display text-2xl font-bold text-white">{activeAgentCount}</p>
+            <p className="text-white/50 text-xs mt-1">Agents in Production</p>
+          </div>
+          <div className="text-center">
+            <p className="font-display text-2xl font-bold text-white">{avgAccuracy.toFixed(1)}%</p>
+            <p className="text-white/50 text-xs mt-1">Avg Accuracy</p>
+          </div>
+          <div className="text-center">
+            <p className="font-display text-2xl font-bold text-white">{formatMoney(totalCostAvoided)}</p>
+            <p className="text-white/50 text-xs mt-1">Annual Cost Avoided</p>
+          </div>
+        </div>
       </div>
 
       {/* Agent coverage chart */}
@@ -53,6 +70,7 @@ export default function ExecutiveDeck() {
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-[#E2E8F0]">
           <h2 className="font-semibold text-[#1A2340] text-sm">Process Transformation — Before vs. After</h2>
+          <p className="text-xs text-[#9BA8BA] mt-0.5">Same five journeys tracked in Discover Hub and Command Center — "After" is each workflow's real average run time.</p>
         </div>
         <table>
           <thead>
@@ -60,7 +78,7 @@ export default function ExecutiveDeck() {
               <th>Process</th>
               <th>Manual (Before)</th>
               <th>DLX_AGENTIC_OS (After)</th>
-              <th>Time Reduction</th>
+              <th>Automation Rate</th>
             </tr>
           </thead>
           <tbody>
@@ -76,9 +94,9 @@ export default function ExecutiveDeck() {
                 <td>
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 rounded-full flex-1 bg-[#E2E8F0] max-w-[80px]">
-                      <div className="h-full rounded-full bg-emerald-500" style={{ width: row.reduction }} />
+                      <div className="h-full rounded-full bg-emerald-500" style={{ width: `${row.automationRate}%` }} />
                     </div>
-                    <span className="text-sm font-bold text-emerald-600">{row.reduction}</span>
+                    <span className="text-sm font-bold text-emerald-600">{row.automationRate}%</span>
                   </div>
                 </td>
               </tr>

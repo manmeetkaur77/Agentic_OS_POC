@@ -6,16 +6,24 @@ import {
   Bot, Layers, Share2, MessageSquare, BarChart2, CheckCircle2,
 } from 'lucide-react'
 import useStore from '../store/useStore'
+import { activeAgentCount, avgAccuracy, storyForWorkflow } from '../data/platformData'
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   MOCK DATA — built from agents that already exist in Discover Hub
+   MOCK DATA — the two catalog-backed swarms are pulled straight from the real
+   workflow records (same ones Discover Hub and Command Center show), so their
+   name, status, agent roster and progress can't drift out of sync. "Fraud
+   Detection Council" is a genuine ad-hoc swarm — assembled from real agents but
+   with no permanent workflow of its own, exactly what Swarm Builder is for.
    ══════════════════════════════════════════════════════════════════════════════ */
 
+const wf001 = storyForWorkflow('wf-001')
+const wf002 = storyForWorkflow('wf-002')
+
 const STATS = [
-  { label: 'Active Agents',   value: '18'   },
-  { label: 'Orchestrations',  value: '3'    },
-  { label: 'Consensus Rate',  value: '94%'  },
-  { label: 'Avg Latency',     value: '1.4s' },
+  { label: 'Active Agents',   value: String(activeAgentCount)      },
+  { label: 'Orchestrations',  value: '3'                            },
+  { label: 'Consensus Rate',  value: `${Math.round(avgAccuracy)}%`  },
+  { label: 'Avg Latency',     value: '1.4s'                         },
 ]
 
 const TABS = [
@@ -32,11 +40,13 @@ const STATUS_STYLE  = {
   queued:  { bg: 'bg-[#F1F5F9]',   text: 'text-[#64748B]'   },
 }
 
+const perHour = (tasksPerDay) => `${Math.max(1, Math.round(tasksPerDay / 24))}/hour`
+
 const ORCHESTRATIONS = [
   {
-    id: 'orc-1', name: 'KYB Multi-Agent Review', pattern: 'sequential', patternLabel: 'Sequential Chain',
-    agents: ['Document Collection Bot', 'KYB Verification Agent', 'Risk Scoring Engine'],
-    throughput: '68/hour', status: 'running', progress: 68,
+    id: 'orc-1', name: wf001.name, pattern: 'sequential', patternLabel: 'Sequential Chain',
+    agents: wf001.agents.map(a => a.name),
+    throughput: perHour(wf001.workflow.tasksPerDay), status: 'running', progress: Math.round(wf001.workflow.sla),
   },
   {
     id: 'orc-2', name: 'Fraud Detection Council', pattern: 'consensus', patternLabel: 'Consensus Protocol',
@@ -44,9 +54,9 @@ const ORCHESTRATIONS = [
     throughput: '12/hour', status: 'voting', progress: 67,
   },
   {
-    id: 'orc-3', name: 'Invoice-to-Cash Swarm', pattern: 'pipeline', patternLabel: 'Pipeline Chain',
-    agents: ['Invoice Ingestion Agent', 'PO Matching Engine', 'GL Posting Agent', 'Exception Handler'],
-    throughput: '34/hour', status: 'running', progress: 81,
+    id: 'orc-3', name: wf002.name, pattern: 'pipeline', patternLabel: 'Pipeline Chain',
+    agents: wf002.agents.map(a => a.name),
+    throughput: perHour(wf002.workflow.tasksPerDay), status: 'queued', progress: Math.round(wf002.workflow.sla),
   },
 ]
 

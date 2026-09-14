@@ -2,40 +2,31 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
-  LayoutGrid, RefreshCw, Save, FolderOpen, FileText, Users, Presentation,
+  RefreshCw, Users, Presentation,
   Zap, ShieldCheck, Activity, Bot, TrendingUp, TrendingDown, ChevronDown,
-  Network, DollarSign, MessageSquare, Send, Brain, MoreHorizontal,
-  CheckCircle2, Clock, AlertTriangle, Shield, ExternalLink, ArrowRight,
+  Network, DollarSign, MessageSquare, Send,
+  CheckCircle2, Clock, AlertTriangle, Shield, ArrowRight, Sparkles,
 } from 'lucide-react'
 import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import useStore from '../store/useStore'
-import { ALL_WORKFLOWS, INDIVIDUAL_AGENTS } from './AgentPool'
+import {
+  ALL_WORKFLOWS, INDIVIDUAL_AGENTS, liveWorkflows, activeAgentCount, dailyExecutions,
+  avgWorkflowSla, avgLiveSla, orchestratedAgentCount, totalCostAvoided, workflowRoi,
+  formatMoney, latencyMs, uptimePct, errorRatePct, monthlyCostUsd,
+  monthlySpendUsd, monthlyBudgetUsd, budgetBurnPct, COST_BREAKDOWN,
+  formatCompact, COST_PER_TASK_USD,
+  storyline,
+} from '../data/platformData'
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   DERIVED DATA — computed from the same catalog Discover Hub reads, so every
-   number on this page agrees with what's shown there. Nothing here is
-   independently hand-typed; it's either a real field or a documented formula
-   applied to real fields.
+   Every figure on this page comes from src/data/platformData.js — the same
+   catalog Discover Hub reads — so nothing here can disagree with another screen.
    ══════════════════════════════════════════════════════════════════════════════ */
 
-const activeAgents     = INDIVIDUAL_AGENTS.filter(a => a.status === 'active').length
-const dailyExecutions  = INDIVIDUAL_AGENTS.reduce((sum, a) => sum + (a.tasksToday || 0), 0)
-const avgAgentAccuracy = INDIVIDUAL_AGENTS.reduce((sum, a) => sum + (a.successRate || 0), 0) / INDIVIDUAL_AGENTS.length
-const liveWorkflows    = ALL_WORKFLOWS.filter(w => w.status === 'live')
-const avgWorkflowSla   = ALL_WORKFLOWS.reduce((sum, w) => sum + w.sla, 0) / ALL_WORKFLOWS.length
-const avgLiveSla       = liveWorkflows.reduce((sum, w) => sum + w.sla, 0) / liveWorkflows.length
-const orchestratingAgentCount = new Set(liveWorkflows.flatMap(w => (w.agents || []).map(a => a.name))).size
-
-// $/annum saved per workflow: tasksPerDay × 250 working days × $8.75 (≈15 min of manual work at $35/hr) avoided per task
-const workflowRoi = (w) => w.tasksPerDay * 250 * 8.75
-// Only workflows that are actually live count toward realized savings
-const totalCostAvoided = liveWorkflows.reduce((sum, w) => sum + workflowRoi(w), 0)
-const formatMillions = (dollars) => dollars >= 1_000_000 ? `$${(dollars / 1_000_000).toFixed(1)}M` : `$${Math.round(dollars / 1000)}K`
-
 const STAT_TILES = [
-  { key: 'agents',    label: 'AI Agents in Production',        value: String(activeAgents),               delta: '+12%',  icon: Bot,          color: '#0EA5E9' },
+  { key: 'agents',    label: 'AI Agents in Production',        value: String(activeAgentCount),           delta: '+12%',  icon: Bot,          color: '#0EA5E9' },
   { key: 'automation',label: 'End-to-End Automation Rate',      value: `${Math.round(liveWorkflows.length / ALL_WORKFLOWS.length * 100)}%`, delta: '+4.5%', icon: Zap,          color: '#F59E0B' },
-  { key: 'cost',      label: 'Cost Avoided Through Automation', value: formatMillions(totalCostAvoided),   delta: '+18%',  icon: TrendingUp,   color: '#10B981' },
+  { key: 'cost',      label: 'Cost Avoided Through Automation', value: formatMoney(totalCostAvoided),   delta: '+18%',  icon: TrendingUp,   color: '#10B981' },
   { key: 'stp',       label: 'Straight-Through Processing',     value: `${Math.round(avgWorkflowSla)}%`,   delta: '+8%',   icon: CheckCircle2, color: '#8B5CF6' },
 ]
 
@@ -46,7 +37,7 @@ const ACTIVITY_DATA = [0.28, 0.6, 0.88, 0.7, 0.75, 1.0, 0.94].map((f, i) => ({
 }))
 
 const ACTIVE_SWARMS = liveWorkflows.map(w => ({
-  name: w.name, agents: w.agents.length, sync: Math.round(w.sla),
+  name: w.name, agents: w.agents.length,
 }))
 
 const COLLAB_TYPE_STYLE = {
@@ -56,26 +47,18 @@ const COLLAB_TYPE_STYLE = {
   escalation: { bg: '#FEF3C7', text: '#B45309' },
 }
 const COLLAB_PATTERNS = [
-  { from: 'KYB Verification Agent',  to: 'Risk Scoring Engine',   type: 'handoff',    count: 245 },
-  { from: 'Risk Scoring Engine',     to: 'Approval Notifier',     type: 'decision',   count: 198 },
-  { from: 'Document Collection Bot', to: 'KYB Verification Agent',type: 'data',       count: 320 },
-  { from: 'Invoice Ingestion Agent', to: 'PO Matching Engine',    type: 'handoff',    count: 156 },
-  { from: 'Exception Handler',       to: 'GL Posting Agent',      type: 'escalation', count: 89  },
+  { from: 'KYB Verification Agent',  to: 'Risk Scoring Engine',   type: 'handoff'    },
+  { from: 'Risk Scoring Engine',     to: 'Approval Notifier',     type: 'decision'   },
+  { from: 'Document Collection Bot', to: 'KYB Verification Agent',type: 'data'       },
+  { from: 'Invoice Ingestion Agent', to: 'PO Matching Engine',    type: 'handoff'    },
+  { from: 'Exception Handler',       to: 'GL Posting Agent',      type: 'escalation' },
 ]
 
-const COST_BREAKDOWN = [
-  { name: 'LLM Tokens', value: 18500, color: '#1A2340' },
-  { name: 'API Calls',  value: 12300, color: '#0EA5E9' },
-  { name: 'Compute',    value: 8900,  color: '#C8102E' },
-  { name: 'Storage',    value: 3200,  color: '#F59E0B' },
-  { name: 'Other',      value: 2780,  color: '#9BA8BA' },
-]
-const MOST_EXPENSIVE_AGENTS = [
-  { rank: 1, name: 'Fraud Detection Agent',       cost: 6240 },
-  { rank: 2, name: 'Risk Scoring Engine',         cost: 4180 },
-  { rank: 3, name: 'Data Enricher',               cost: 3120 },
-  { rank: 4, name: 'KYB Verification Agent',      cost: 2460 },
-]
+// Top spenders fall out of the catalog: run-cost scales with the volume each agent handles
+const MOST_EXPENSIVE_AGENTS = [...INDIVIDUAL_AGENTS]
+  .sort((a, b) => monthlyCostUsd(b) - monthlyCostUsd(a))
+  .slice(0, 4)
+  .map((a, i) => ({ rank: i + 1, name: a.name, cost: monthlyCostUsd(a) }))
 
 const HANDOFF_REASONS = [
   { name: 'Policy Exception',  value: 45, color: '#1A2340' },
@@ -116,19 +99,18 @@ const ASK_CHIPS = [
   'Which agents need optimization?',
 ]
 
-// Real agents, spanning every category in the catalog — trust/tasksDay are exact;
-// latency/uptime/errors/costMo are formulas over the real successRate/tasksToday fields
+// Real agents, spanning every category in the catalog — tasksDay is exact;
+// latency/uptime/errors are formulas over the real successRate/tasksToday fields
 const AGENT_PERF_CATEGORIES = ['All', 'Risk & Compliance', 'Onboarding', 'Operations', 'Data', 'Revenue']
 const AGENT_PERF_IDS = ['ia-20', 'ia-03', 'ia-02', 'ia-05', 'ia-08', 'ia-06']
 const AGENT_PERF = AGENT_PERF_IDS.map(id => {
   const a = INDIVIDUAL_AGENTS.find(x => x.id === id)
   return {
-    name: a.name, sub: a.description, category: a.category, trust: a.successRate,
-    latency: Math.max(40, Math.round(20000 / a.tasksToday)),
-    uptime: Math.min(99.9, +(a.successRate + 1.2).toFixed(1)),
-    errors: +Math.max(0.05, (100 - a.successRate) * 0.35).toFixed(2),
+    name: a.name, sub: a.description, category: a.category,
+    latency: latencyMs(a),
+    uptime:  uptimePct(a),
+    errors:  errorRatePct(a),
     tasksDay: a.tasksToday,
-    costMo: Math.round(a.tasksToday * 1.9),
   }
 })
 
@@ -137,16 +119,8 @@ const AGENT_PERF = AGENT_PERF_IDS.map(id => {
 const WORKFLOW_ANALYTICS = ALL_WORKFLOWS.map(w => ({
   name: w.name, sub: w.description, status: w.status,
   stp: w.sla, tat: w.avgRunTime, agents: w.agents.length,
-  deviations: Math.max(1, Math.round((100 - w.sla) / 100 * w.tasksPerDay)),
-  human: Math.max(2, Math.round((100 - w.sla) / 100 * w.tasksPerDay) + 1),
-  roi: formatMillions(workflowRoi(w)) + ' annually',
+  roi: formatMoney(workflowRoi(w)) + ' annually',
 }))
-
-const ACTIVE_INITIATIVES = [
-  { name: 'Fraud Detection Modernization',     sub: 'Sub-second anomaly detection across the transaction stream', agents: 4, status: 'Running', gain: 95 },
-  { name: 'Invoice Reconciliation Automation', sub: 'Auto GL posting with exception routing',                     agents: ALL_WORKFLOWS.find(w => w.id === 'wf-002').agents.length, status: 'Running', gain: 72 },
-  { name: 'Merchant Onboarding Acceleration',  sub: 'Cutting onboarding from days to hours',                      agents: ALL_WORKFLOWS.find(w => w.id === 'wf-001').agents.length, status: 'Running', gain: 68 },
-]
 
 /* ══════════════════════════════════════════════════════════════════════════════
    SMALL PRESENTATIONAL PIECES
@@ -184,6 +158,33 @@ function MiniDonut({ data, size = 150 }) {
         />
       </PieChart>
     </ResponsiveContainer>
+  )
+}
+
+function StoryCard({ story, onOpen }) {
+  const SegIcon = story.segment.icon
+  return (
+    <button onClick={onOpen}
+      className="text-left rounded-2xl border border-[#E2E8F0] bg-white p-4 flex-shrink-0 hover:border-[#CBD5E0] hover:shadow-sm transition-all"
+      style={{ width: 250 }}>
+      <div className="flex items-center justify-between mb-2.5">
+        <div className="flex items-center gap-1.5">
+          <div className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0" style={{ background: `${story.segment.color}18` }}>
+            <SegIcon size={12} style={{ color: story.segment.color }} />
+          </div>
+          <span className="text-xs font-semibold text-[#718096]">{story.segment.short}</span>
+        </div>
+        <span className="px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0" style={{ background: `${story.stageMeta.color}18`, color: story.stageMeta.color }}>
+          {story.stageMeta.label}
+        </span>
+      </div>
+      <p className="text-xs font-bold text-[#1A2340] leading-snug mb-2">{story.headline}</p>
+      <div className="flex items-center gap-1.5 text-xs">
+        <span className="px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#718096] line-through">{story.before.value}</span>
+        <ArrowRight size={10} className="text-[#CBD5E0] flex-shrink-0" />
+        <span className="px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 font-semibold border border-emerald-100">{story.workflow.avgRunTime}</span>
+      </div>
+    </button>
   )
 }
 
@@ -228,9 +229,8 @@ function ToolbarButton({ icon: Icon, label, onClick, primary }) {
 export default function CommandCenter() {
   const navigate = useNavigate()
   const { addToast } = useStore()
-  const [tab, setTab] = useState('overview')
   const [perfCategory, setPerfCategory] = useState('All')
-  const [perfSort, setPerfSort] = useState('trust')
+  const [perfSort, setPerfSort] = useState('latency')
   const [askInput, setAskInput] = useState('')
 
   const notify = (title, message) => addToast({ type: 'info', title, message })
@@ -238,7 +238,7 @@ export default function CommandCenter() {
   const filteredAgents = AGENT_PERF
     .filter(a => perfCategory === 'All' || a.category === perfCategory)
     .slice()
-    .sort((a, b) => (perfSort === 'trust' ? b.trust - a.trust : perfSort === 'latency' ? a.latency - b.latency : b.uptime - a.uptime))
+    .sort((a, b) => (perfSort === 'latency' ? a.latency - b.latency : perfSort === 'uptime' ? b.uptime - a.uptime : a.errors - b.errors))
 
   const handleAsk = () => {
     if (!askInput.trim()) return
@@ -250,31 +250,6 @@ export default function CommandCenter() {
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
       className="flex flex-col gap-5">
 
-      {/* ── Overview / Portfolio tab switcher ── */}
-      <div className="flex justify-center">
-        <div className="inline-flex p-1 rounded-xl bg-[#EDF0F5] gap-1">
-          {['overview', 'portfolio'].map(t => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
-                tab === t ? 'bg-white text-[#1A2340] shadow-sm' : 'text-[#718096] hover:text-[#1A2340]'
-              }`}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {tab === 'portfolio' ? (
-        <div className="card p-12 text-center">
-          <LayoutGrid size={28} className="text-[#CBD5E0] mx-auto mb-3" />
-          <p className="text-sm font-semibold text-[#1A2340]">Portfolio view</p>
-          <p className="text-xs text-[#9BA8BA] mt-1">Cross-segment portfolio rollups are coming to Command Center soon.</p>
-        </div>
-      ) : (
-      <>
       {/* ── Auto-optimization event banner ── */}
       <div className="rounded-2xl px-5 py-3.5 flex items-center justify-between gap-4 flex-wrap"
         style={{ background: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)', borderLeft: '4px solid #F59E0B' }}>
@@ -298,12 +273,23 @@ export default function CommandCenter() {
           <p className="text-sm text-[#718096] mt-1">Real-time intelligence across your autonomous workforce — track adoption, efficiency, and ROI</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <ToolbarButton icon={Save}         label="Save"        onClick={() => notify('Saved', 'Command Center layout saved.')} />
-          <ToolbarButton icon={FolderOpen}   label="Load"        onClick={() => notify('Load', 'No saved layouts yet.')} />
-          <ToolbarButton icon={FileText}     label="Templates"   onClick={() => notify('Templates', 'Dashboard templates coming soon.')} />
           <ToolbarButton icon={Users}        label="Collaborate" onClick={() => notify('Collaborate', 'Invite teammates to co-edit this dashboard.')} />
           <ToolbarButton icon={Presentation} label="Present"     onClick={() => notify('Present', 'Presentation mode coming soon.')} />
           <ToolbarButton icon={Zap} label="Launch Agent" primary onClick={() => navigate('/builder')} />
+        </div>
+      </div>
+
+      {/* ── Automation Journeys — one storyline per segment, from discovery to scale ── */}
+      <div>
+        <div className="flex items-center gap-2 mb-2.5">
+          <Sparkles size={13} className="text-[#8B5CF6]" />
+          <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider">Automation Journeys</p>
+        </div>
+        <div className="flex items-stretch gap-3 overflow-x-auto pb-1">
+          {storyline.map(story => (
+            <StoryCard key={story.workflowId} story={story}
+              onOpen={() => navigate(story.stage === 'building' || story.stage === 'governance' ? '/approval-centre' : '/agent-pool')} />
+          ))}
         </div>
       </div>
 
@@ -319,7 +305,7 @@ export default function CommandCenter() {
             <p className="text-xs text-white/75 mt-0.5">100% audit coverage &middot; Human oversight enabled &middot; Zero unauthorized actions</p>
           </div>
         </div>
-        <button onClick={() => navigate('/governance')}
+        <button onClick={() => navigate('/approval-centre')}
           className="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold text-white bg-white/15 hover:bg-white/25 transition-all">
           View Risk Dashboard
         </button>
@@ -334,7 +320,7 @@ export default function CommandCenter() {
           </div>
           <div>
             <p className="text-xs font-bold uppercase tracking-widest text-blue-300">Real-Time Orchestration</p>
-            <p className="text-sm text-white/70 mt-0.5">{liveWorkflows.length} Active Swarms &middot; {orchestratingAgentCount} Agents Collaborating &middot; {Math.round(avgLiveSla)}% Synchronization</p>
+            <p className="text-sm text-white/70 mt-0.5">{liveWorkflows.length} Active Swarms &middot; {orchestratedAgentCount} Agents Collaborating &middot; {Math.round(avgLiveSla)}% Synchronization</p>
           </div>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -391,7 +377,6 @@ export default function CommandCenter() {
                   <p className="text-xs font-bold text-[#1A2340] truncate">{s.name}</p>
                   <p className="text-xs text-[#9BA8BA]">{s.agents} agents collaborating</p>
                 </div>
-                <span className="text-sm font-bold text-emerald-600 flex-shrink-0">{s.sync}% <span className="text-xs font-normal text-[#9BA8BA]">sync</span></span>
               </div>
             ))}
           </div>
@@ -406,63 +391,10 @@ export default function CommandCenter() {
                   <ArrowRight size={11} className="text-[#CBD5E0] flex-shrink-0" />
                   <span className="text-xs font-medium text-[#4A5568] truncate flex-1 min-w-0">{p.to}</span>
                   <span className="px-2 py-0.5 rounded-full text-xs font-semibold flex-shrink-0" style={{ background: s.bg, color: s.text }}>{p.type}</span>
-                  <span className="text-xs font-bold text-[#1A2340] flex-shrink-0 w-8 text-right">{p.count}</span>
                 </div>
               )
             })}
           </div>
-        </div>
-      </div>
-
-      {/* ── Opik Observability ── */}
-      <div className="rounded-2xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
-        style={{ background: 'linear-gradient(135deg,#1D4ED8 0%,#1E3A8A 100%)' }}>
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
-            <Activity size={17} className="text-white" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold text-white">Opik Observability</p>
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-white/15 text-white/80">Flight Recorder</span>
-            </div>
-            <p className="text-xs text-white/60 mt-0.5">Every execution traced, measured, replayable</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-5 flex-shrink-0">
-          <div className="text-center"><p className="text-sm font-bold text-blue-200">98.7%</p><p className="text-xs text-white/50">Success Rate</p></div>
-          <div className="text-center"><p className="text-sm font-bold text-emerald-300">420ms</p><p className="text-xs text-white/50">P95 Latency</p></div>
-          <div className="text-center"><p className="text-sm font-bold text-fuchsia-300">43.1K</p><p className="text-xs text-white/50">Traces</p></div>
-          <button onClick={() => notify('Opik Observability', 'Deep-dive tracing view is coming to this workspace soon.')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#1D4ED8] bg-white hover:bg-white/90 transition-all">
-            Open Observability <ExternalLink size={11} />
-          </button>
-        </div>
-      </div>
-
-      {/* ── Context Awareness Layer ── */}
-      <div className="rounded-2xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap"
-        style={{ background: 'linear-gradient(135deg,#0F1730 0%,#1A2340 100%)', borderLeft: '3px solid #F59E0B' }}>
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center flex-shrink-0">
-            <Network size={17} className="text-amber-400" />
-          </div>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-bold text-white">Context Awareness Layer</p>
-              <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300">Live</span>
-            </div>
-            <p className="text-xs text-white/50 mt-0.5">Decision traces powering agent intelligence</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-5 flex-shrink-0">
-          <div className="text-center"><p className="text-sm font-bold text-blue-300">43.1K</p><p className="text-xs text-white/50">Traces</p></div>
-          <div className="text-center"><p className="text-sm font-bold text-emerald-300">94%</p><p className="text-xs text-white/50">Cache Hit</p></div>
-          <div className="text-center"><p className="text-sm font-bold text-fuchsia-300">23ms</p><p className="text-xs text-white/50">Latency</p></div>
-          <button onClick={() => notify('Context Awareness Layer', 'Source, graph and agent views are coming to this workspace soon.')}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-[#1A2340] bg-amber-400 hover:bg-amber-300 transition-all">
-            Open Context Awareness <ExternalLink size={11} />
-          </button>
         </div>
       </div>
 
@@ -479,23 +411,23 @@ export default function CommandCenter() {
         <div className="grid grid-cols-4 gap-3 mb-5">
           <div className="rounded-xl px-4 py-3 bg-emerald-50 border border-emerald-100">
             <p className="text-xs text-[#718096]">Monthly Spend</p>
-            <p className="text-lg font-bold text-[#1A2340] mt-0.5">$45,680</p>
+            <p className="text-lg font-bold text-[#1A2340] mt-0.5">${monthlySpendUsd.toLocaleString()}</p>
             <p className="text-xs text-emerald-600 mt-0.5 flex items-center gap-1"><TrendingDown size={11} /> 12% vs last month</p>
           </div>
           <div className="rounded-xl px-4 py-3 bg-blue-50 border border-blue-100">
             <p className="text-xs text-[#718096]">Cost / Task</p>
-            <p className="text-lg font-bold text-[#1A2340] mt-0.5">$0.12</p>
-            <p className="text-xs text-[#9BA8BA] mt-0.5">Average</p>
+            <p className="text-lg font-bold text-[#1A2340] mt-0.5">${COST_PER_TASK_USD.toFixed(2)}</p>
+            <p className="text-xs text-[#9BA8BA] mt-0.5">{formatCompact(dailyExecutions)} tasks/day</p>
           </div>
           <div className="rounded-xl px-4 py-3 bg-amber-50 border border-amber-100">
             <p className="text-xs text-[#718096]">Budget Burn</p>
-            <p className="text-lg font-bold text-amber-600 mt-0.5">68%</p>
-            <p className="text-xs text-[#9BA8BA] mt-0.5">$50K allocated</p>
+            <p className="text-lg font-bold text-amber-600 mt-0.5">{budgetBurnPct}%</p>
+            <p className="text-xs text-[#9BA8BA] mt-0.5">{formatMoney(monthlyBudgetUsd)} allocated</p>
           </div>
           <div className="rounded-xl px-4 py-3 bg-purple-50 border border-purple-100">
             <p className="text-xs text-[#718096]">Savings Found</p>
-            <p className="text-lg font-bold text-purple-600 mt-0.5">$8.2K</p>
-            <p className="text-xs text-[#9BA8BA] mt-0.5">This month</p>
+            <p className="text-lg font-bold text-purple-600 mt-0.5">{formatMoney(monthlyBudgetUsd - monthlySpendUsd)}</p>
+            <p className="text-xs text-[#9BA8BA] mt-0.5">Headroom this month</p>
           </div>
         </div>
 
@@ -536,18 +468,14 @@ export default function CommandCenter() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-sm font-bold text-[#1A2340]">Human-Agent Handoffs</p>
-              <p className="text-xs text-[#9BA8BA] mt-0.5">Intervention patterns and success rates</p>
+              <p className="text-xs text-[#9BA8BA] mt-0.5">Intervention patterns and response times</p>
             </div>
             <Users size={16} className="text-[#CBD5E0] flex-shrink-0" />
           </div>
-          <div className="grid grid-cols-3 gap-3 mb-4">
+          <div className="grid grid-cols-2 gap-3 mb-4">
             <div className="rounded-xl px-3 py-2.5 bg-blue-50 border border-blue-100">
               <p className="text-xs text-[#718096]">Today's Handoffs</p>
               <p className="text-lg font-bold text-[#1A2340] mt-0.5 flex items-center gap-1">234 <TrendingDown size={12} className="text-red-400" /></p>
-            </div>
-            <div className="rounded-xl px-3 py-2.5 bg-emerald-50 border border-emerald-100">
-              <p className="text-xs text-[#718096]">Success Rate</p>
-              <p className="text-lg font-bold text-emerald-600 mt-0.5">87%</p>
             </div>
             <div className="rounded-xl px-3 py-2.5 bg-amber-50 border border-amber-100">
               <p className="text-xs text-[#718096]">Avg Response</p>
@@ -669,9 +597,9 @@ export default function CommandCenter() {
           </div>
           <select value={perfSort} onChange={e => setPerfSort(e.target.value)}
             className="px-3 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-[#4A5568] bg-white focus:outline-none">
-            <option value="trust">Trust Score</option>
             <option value="latency">Latency</option>
             <option value="uptime">Uptime</option>
+            <option value="errors">Error Rate</option>
           </select>
         </div>
         <div className="flex items-center gap-2 mb-4 flex-wrap">
@@ -697,11 +625,7 @@ export default function CommandCenter() {
                 </div>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 flex-shrink-0" />
               </div>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div className="rounded-lg bg-[#F7F8FA] px-2.5 py-2">
-                  <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><Zap size={9} /> Trust</p>
-                  <p className="text-sm font-bold text-[#1A2340]">{a.trust}</p>
-                </div>
+              <div className="grid grid-cols-2 gap-2">
                 <div className="rounded-lg bg-[#F7F8FA] px-2.5 py-2">
                   <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><Clock size={9} /> Latency</p>
                   <p className="text-sm font-bold text-[#1A2340]">{a.latency}ms</p>
@@ -714,10 +638,10 @@ export default function CommandCenter() {
                   <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><AlertTriangle size={9} /> Errors</p>
                   <p className="text-sm font-bold text-red-500">{a.errors}%</p>
                 </div>
-              </div>
-              <div className="flex items-center justify-between text-xs text-[#9BA8BA] pt-2 border-t border-[#F0F2F5]">
-                <span>{a.tasksDay.toLocaleString()} tasks/day</span>
-                <span>${a.costMo.toLocaleString()}/mo</span>
+                <div className="rounded-lg bg-[#F7F8FA] px-2.5 py-2">
+                  <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><Zap size={9} /> Tasks/day</p>
+                  <p className="text-sm font-bold text-[#1A2340]">{a.tasksDay.toLocaleString()}</p>
+                </div>
               </div>
             </div>
           ))}
@@ -745,10 +669,9 @@ export default function CommandCenter() {
                   wf.status === 'live' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
                 }`}>{wf.status === 'live' ? 'live' : 'under review'}</span>
               </div>
-              <div className="grid grid-cols-5 gap-2 mb-3">
+              <div className="grid grid-cols-3 gap-2 mb-3">
                 {[
                   ['STP Rate', `${wf.stp}%`], ['Avg TAT', wf.tat], ['Agents', wf.agents],
-                  ['Deviations', wf.deviations], ['Human', wf.human],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg bg-white px-2.5 py-2 border border-[#E2E8F0]">
                     <p className="text-xs text-[#9BA8BA]">{label}</p>
@@ -764,77 +687,6 @@ export default function CommandCenter() {
         </div>
       </div>
 
-      {/* ── Predictive Anomalies ── */}
-      <div className="card p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-              <Brain size={16} className="text-purple-500" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-[#1A2340]">Predictive Anomalies</p>
-              <p className="text-xs text-[#9BA8BA]">AI-detected issues and predictions</p>
-            </div>
-          </div>
-          <span className="flex items-center gap-1.5 text-xs text-emerald-600 font-semibold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" /> Live Detection
-          </span>
-        </div>
-        <div className="flex flex-col items-center justify-center py-8">
-          <motion.div animate={{ opacity: [0.35, 0.8, 0.35] }} transition={{ duration: 2, repeat: Infinity }}>
-            <Brain size={40} className="text-[#E2E8F0]" />
-          </motion.div>
-          <p className="text-sm text-[#9BA8BA] mt-3">Analyzing system behavior…</p>
-        </div>
-      </div>
-
-      {/* ── Active Initiatives ── */}
-      <div className="card p-5">
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm font-bold text-[#1A2340]">Active Initiatives</p>
-          <MoreHorizontal size={16} className="text-[#CBD5E0]" />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left text-xs text-[#9BA8BA] uppercase tracking-wider border-b border-[#F0F2F5]">
-                <th className="pb-2.5 font-semibold">Initiative Name</th>
-                <th className="pb-2.5 font-semibold">Agents Deployed</th>
-                <th className="pb-2.5 font-semibold">Status</th>
-                <th className="pb-2.5 font-semibold">Efficiency Gain</th>
-                <th className="pb-2.5 font-semibold text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ACTIVE_INITIATIVES.map(init => (
-                <tr key={init.name} className="border-b border-[#F7F8FA] last:border-0">
-                  <td className="py-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
-                        <Zap size={13} className="text-[#0EA5E9]" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-bold text-[#1A2340]">{init.name}</p>
-                        <p className="text-xs text-[#9BA8BA]">{init.sub}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 text-xs text-[#4A5568]">{init.agents} Agents</td>
-                  <td className="py-3">
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">{init.status}</span>
-                  </td>
-                  <td className="py-3 text-xs font-bold text-emerald-600">{init.gain}%</td>
-                  <td className="py-3 text-right">
-                    <button onClick={() => navigate('/agent-pool')} className="text-xs font-semibold text-[#0EA5E9] hover:underline">Manage</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      </>
-      )}
     </motion.div>
   )
 }

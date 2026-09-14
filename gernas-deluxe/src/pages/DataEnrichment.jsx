@@ -2,15 +2,18 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Database, Globe, TrendingUp, BarChart2 } from 'lucide-react'
 import StatusBadge from '../components/shared/StatusBadge'
+import { agentByName } from '../data/platformData'
 
 const SEG_COLOR = '#10B981'
+
+const dataEnrichmentAgent = agentByName('Data Enrichment Agent') || {}
 
 const FALLBACK_AGENTS = [
   {
     id: 'agent-005',
-    name: 'Data Enrichment Agent',
+    name: dataEnrichmentAgent.name || 'Data Enrichment Agent',
     description: 'Enriches Deluxe SMB profiles with industry signals, credit data, and payment intelligence.',
-    status: 'running', successRate: 99, tasksToday: 892,
+    status: 'running', successRate: dataEnrichmentAgent.successRate, tasksToday: dataEnrichmentAgent.tasksToday,
     Icon: Database,
   },
 ]

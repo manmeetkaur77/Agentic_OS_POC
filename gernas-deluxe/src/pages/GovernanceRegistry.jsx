@@ -6,7 +6,20 @@ import {
   FileText, Terminal, Lock, ToggleRight, ToggleLeft,
 } from 'lucide-react'
 import useStore from '../store/useStore'
-import { INCOMPLETE_WORKFLOWS, UNDER_REVIEW_AGENTS } from '../data/platformData'
+import { INCOMPLETE_WORKFLOWS, UNDER_REVIEW_AGENTS, budgetBurnPct } from '../data/platformData'
+
+/* ── Active Policy Matrix — mirrors the guardrails enforced in Trust & Control,
+   plus the two compliance controls (sanctions screening, budget cap) not
+   covered there. Budget Cap status flips to Warning off the real burn rate. ── */
+const POLICY_MATRIX = [
+  { id: 'POL-001', name: 'Human-in-the-Loop Approval', type: 'Financial Risk',   provider: 'Internal',   enforcement: 'Strict', status: 'active',                                    lastAudit: 'Just now' },
+  { id: 'POL-002', name: 'Audit Logging',               type: 'Compliance',       provider: 'Internal',   enforcement: 'Strict', status: 'active',                                    lastAudit: '10 mins ago' },
+  { id: 'POL-003', name: 'Rate Limiting — High-Risk Agents', type: 'Security',    provider: 'Internal',   enforcement: 'Strict', status: 'active',                                    lastAudit: '3 mins ago' },
+  { id: 'POL-004', name: 'Dry-Run Before Production',    type: 'Change Management', provider: 'Internal', enforcement: 'Strict', status: 'active',                                    lastAudit: '1 hour ago' },
+  { id: 'POL-005', name: 'Alert on Exception',           type: 'Observability',   provider: 'Internal',   enforcement: 'Strict', status: 'active',                                    lastAudit: '15 mins ago' },
+  { id: 'POL-006', name: 'Sanctions & OFAC Screening',   type: 'BSA / AML',       provider: 'Refinitiv',  providerColor: '#1D4ED8', enforcement: 'Strict', status: 'active',           lastAudit: '2 hours ago' },
+  { id: 'POL-007', name: 'Daily Spend Budget Cap',       type: 'Cost Control',    provider: 'Internal',   enforcement: 'Soft',   status: budgetBurnPct >= 90 ? 'warning' : 'active',   lastAudit: '5 mins ago' },
+]
 
 /* ── Compliance framework data ─────────────────────────────────────────────── */
 const FRAMEWORKS = [
@@ -195,8 +208,11 @@ function RiskReportCard({ report, tools, rl, title, subtitle, onApprove, onRejec
           </div>
         )}
       </AnimatePresence>
-      <button className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-[#F7F9FF] transition-all"
-        onClick={onToggle}>
+      <div
+        role="button" tabIndex={0}
+        className="w-full px-5 py-4 flex items-center gap-4 text-left hover:bg-[#F7F9FF] transition-all cursor-pointer"
+        onClick={onToggle}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle() } }}>
         <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: rl.bg, border: '1.5px solid ' + rl.border }}>
           <Bot size={17} style={{ color: rl.text }} />
         </div>
@@ -224,7 +240,7 @@ function RiskReportCard({ report, tools, rl, title, subtitle, onApprove, onRejec
           </div>
           {isOpen ? <ChevronUp size={14} className="text-[#9BA8BA]" /> : <ChevronDown size={14} className="text-[#9BA8BA]" />}
         </div>
-      </button>
+      </div>
 
       <AnimatePresence>
         {isOpen && (
@@ -456,7 +472,8 @@ export default function GovernanceRegistry() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="font-display text-xl font-bold text-[#1A2340]">Agent Governance & Compliance</h1>
+          <h1 className="font-display text-xl font-bold text-[#1A2340]">Approval Centre</h1>
+          <p className="text-sm text-[#718096] mt-0.5">Agent & workflow governance, compliance sign-off</p>
         </div>
         <div className="flex items-center gap-3">
           {totalPending > 0 && (
@@ -526,6 +543,64 @@ export default function GovernanceRegistry() {
                 </motion.div>
               )
             })}
+          </div>
+
+          {/* Active Policy Matrix */}
+          <div className="card overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[#E2E8F0]">
+              <div className="flex items-center gap-2">
+                <Shield size={16} className="text-[#1A2340]" />
+                <p className="text-sm font-bold text-[#1A2340]">Active Policy Matrix</p>
+              </div>
+              <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                System Compliant
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-[#F7F8FA] text-[10px] font-bold uppercase tracking-wider text-[#9BA8BA]">
+                    <th className="px-5 py-3">Policy Name</th>
+                    <th className="px-5 py-3">Type</th>
+                    <th className="px-5 py-3">Provider</th>
+                    <th className="px-5 py-3">Enforcement</th>
+                    <th className="px-5 py-3">Status</th>
+                    <th className="px-5 py-3 text-right">Last Audit</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {POLICY_MATRIX.map((p, i) => (
+                    <tr key={p.id} className={i !== POLICY_MATRIX.length - 1 ? 'border-b border-[#F1F3F7]' : ''}>
+                      <td className="px-5 py-3.5">
+                        <p className="text-xs font-bold text-[#1A2340]">{p.name}</p>
+                        <p className="text-[10px] text-[#B0BAC9] mt-0.5">{p.id}</p>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-[#4A5568]">{p.type}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md"
+                          style={p.provider === 'Internal'
+                            ? { background: '#F1F5F9', color: '#475569' }
+                            : { background: `${p.providerColor}18`, color: p.providerColor }}>
+                          {p.provider}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${p.enforcement === 'Strict' ? 'bg-[#F1F5F9] text-[#475569]' : 'bg-amber-50 text-amber-700'}`}>
+                          {p.enforcement}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5">
+                        <span className={`flex items-center gap-1.5 text-xs font-semibold ${p.status === 'warning' ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          {p.status === 'warning' ? <AlertCircle size={12} /> : <CheckCircle size={12} />}
+                          {p.status === 'warning' ? 'Warning' : 'Active'}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3.5 text-xs text-[#9BA8BA] text-right">{p.lastAudit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

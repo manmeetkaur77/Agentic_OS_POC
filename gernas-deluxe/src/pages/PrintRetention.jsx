@@ -2,25 +2,35 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Printer, TrendingUp } from 'lucide-react'
 import StatusBadge from '../components/shared/StatusBadge'
+import { agentByName } from '../data/platformData'
 
 const SEG_COLOR = '#6B7280'
 
-const FALLBACK_AGENTS = [
+const FALLBACK_AGENT_DEFS = [
   {
     id: 'agent-004',
-    name: 'Churn Prevention Agent',
+    catalogName: 'Churn Prevention Agent',
     description: 'Proactive AI intervention to detect and prevent print customer churn before it happens.',
-    status: 'running', successRate: 96, tasksToday: 312,
     Icon: Printer,
   },
   {
     id: 'agent-006',
-    name: 'Upsell Intelligence Agent',
+    catalogName: 'Upsell Intelligence Agent',
     description: 'Identifies cross-sell and upsell opportunities across the print customer base.',
-    status: 'running', successRate: 94, tasksToday: 198,
     Icon: TrendingUp,
   },
 ]
+
+const FALLBACK_AGENTS = FALLBACK_AGENT_DEFS.map(({ catalogName, ...def }) => {
+  const catalog = agentByName(catalogName) || {}
+  return {
+    ...def,
+    name: catalog.name || catalogName,
+    status: 'running',
+    successRate: catalog.successRate,
+    tasksToday: catalog.tasksToday,
+  }
+})
 
 const AT_RISK_ACCOUNTS = [
   { id: 'DLX-4421', name: 'Crawford & Sons',       risk: 87, signal: 'Order frequency -60%', lastOrder: '62 days ago', action: 'Retention email sent',  status: 'contacted'  },

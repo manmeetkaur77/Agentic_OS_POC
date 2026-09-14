@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { FileText, Link, AlertTriangle } from 'lucide-react'
 import StatusBadge from '../components/shared/StatusBadge'
+import { agentByName } from '../data/platformData'
 
 const SEG_COLOR = '#8B5CF6'
+
+const invoiceReconAgent = agentByName('Invoice Reconciliation Agent') || {}
 
 const FALLBACK_AGENTS = [
   {
     id: 'agent-003',
-    name: 'Invoice Reconciliation Agent',
-    description: 'Auto-matches B2B payments to invoices across ERP systems with 94% straight-through rate.',
-    status: 'running', successRate: 94, tasksToday: 149,
+    name: invoiceReconAgent.name || 'Invoice Reconciliation Agent',
+    description: `Auto-matches B2B payments to invoices across ERP systems with ${invoiceReconAgent.successRate ?? 94}% straight-through rate.`,
+    status: 'running', successRate: invoiceReconAgent.successRate, tasksToday: invoiceReconAgent.tasksToday,
     Icon: FileText,
   },
 ]

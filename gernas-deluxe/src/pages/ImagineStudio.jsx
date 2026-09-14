@@ -399,7 +399,7 @@ function AgentRecommendationCard({ agentName, agentId, segment, solvedNeeds, par
               {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <button
-                  onClick={(e) => { e.stopPropagation(); navigate('/merchant') }}
+                  onClick={(e) => { e.stopPropagation(); navigate('/agent-pool') }}
                   className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-white transition-all"
                   style={{ background: color }}
                 >
@@ -2169,9 +2169,9 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
     addToast({
       type:    'success',
       title:   'Document created in Confluence',
-      message: `Opening Agent Analyst to build your agent…`,
+      message: `Opening Agent Builder to build your agent…`,
     })
-    setTimeout(() => navigate('/agent-analyst'), 800)
+    setTimeout(() => navigate('/builder'), 800)
   }
 
   const handleOptionClick = async (msgId, answer) => {
@@ -2297,9 +2297,9 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
     addToast({
       type:    'success',
       title:   'Workflow sent for approval ✓',
-      message: `"${wfName.slice(0, 50)}…" is pending review on the homepage.`,
+      message: `"${wfName.slice(0, 50)}…" is pending review in Approval Centre.`,
     })
-    setTimeout(() => navigate('/dashboard'), 900)
+    setTimeout(() => navigate('/approval-centre'), 900)
   }
 
   // ── Derived: all build-needed agents are built or skipped ──

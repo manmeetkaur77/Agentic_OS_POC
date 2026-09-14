@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import useStore from '../store/useStore'
 import StatusBadge from '../components/shared/StatusBadge'
+import { agentByName } from '../data/platformData'
 
 const SEG_COLOR = '#0EA5E9'
 
@@ -18,22 +19,31 @@ const stepDescriptions = {
   6: 'Welcome email sent. Training materials delivered. Account manager assigned.',
 }
 
-const FALLBACK_AGENTS = [
+const FALLBACK_AGENT_DEFS = [
   {
     id: 'agent-001',
-    name: 'SMB Onboarding Agent',
+    catalogName: 'SMB Onboarding Agent',
     description: 'End-to-end merchant onboarding — from application to live account in 2.3 hours.',
-    status: 'running', successRate: 98, tasksToday: 847,
     Icon: CreditCard,
   },
   {
     id: 'agent-002',
-    name: 'Fraud Detection Agent',
+    catalogName: 'Fraud Detection Agent',
     description: 'Real-time transaction monitoring and anomaly detection across all merchant accounts.',
-    status: 'running', successRate: 97, tasksToday: 14892,
     Icon: Shield,
   },
 ]
+
+const FALLBACK_AGENTS = FALLBACK_AGENT_DEFS.map(({ catalogName, ...def }) => {
+  const catalog = agentByName(catalogName) || {}
+  return {
+    ...def,
+    name: catalog.name || catalogName,
+    status: 'running',
+    successRate: catalog.successRate,
+    tasksToday: catalog.tasksToday,
+  }
+})
 
 const FLAGGED_TXNS = [
   { id: 'TXN-88291', merchant: 'Quick Mart #441',   risk: 94, signal: 'Unusual amount + new IP',    action: 'Hold placed',  status: 'review'    },
@@ -254,12 +264,13 @@ function FraudDetectionDetail() {
     escalated: 'bg-orange-100 text-orange-700 border border-orange-200',
     watching:  'bg-gray-100 text-gray-600 border border-gray-200',
   }
+  const fraudAgent = agentByName('Fraud Detection Agent') || {}
 
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-4 gap-4">
         {[
-          { label: 'Txns Scanned Today', value: '14,892', sub: 'across all merchants',    highlight: false },
+          { label: 'Txns Scanned Today', value: (fraudAgent.tasksToday ?? 0).toLocaleString(), sub: 'across all merchants',    highlight: false },
           { label: 'Flagged',            value: '23',     sub: 'anomalies detected',       highlight: false },
           { label: 'Holds Placed',       value: '7',      sub: 'pending review',           highlight: true  },
           { label: 'False Positive Rate',value: '2.1%',   sub: 'industry avg 4.8%',        highlight: false },

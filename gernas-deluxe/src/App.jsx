@@ -1,44 +1,48 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Layout              from './components/layout/Layout'
-import Dashboard           from './pages/Dashboard'
-import CommandCenter       from './pages/CommandCenter'
-import LiveOperations      from './pages/LiveOperations'
-import MultiAgentOrchestration from './pages/MultiAgentOrchestration'
-import AgentOrchestration  from './pages/AgentOrchestration'
-import MerchantOnboarding  from './pages/MerchantOnboarding'
-import PrintRetention      from './pages/PrintRetention'
-import B2BReconciliation   from './pages/B2BReconciliation'
-import DataEnrichment      from './pages/DataEnrichment'
-import GovernanceRegistry  from './pages/GovernanceRegistry'
-import ExecutiveDeck       from './pages/ExecutiveDeck'
-import AgentBuilder        from './pages/AgentBuilder'
-import AgentAnalyst        from './pages/AgentAnalyst'
-import ImagineStudio       from './pages/ImagineStudio'
-import AgentPool           from './pages/AgentPool'
-import CommonAgents        from './pages/CommonAgents'
+import Layout                  from './components/layout/Layout'
+// Build & Catalog
+import AgentPool               from './pages/AgentPool'
+import AgentBuilder            from './pages/AgentBuilder'
+import AgentOrchestrator       from './pages/AgentOrchestrator'
+import ImagineStudio           from './pages/ImagineStudio'
+// Operations
+import CommandCenter           from './pages/CommandCenter'
+import LiveOperations          from './pages/LiveOperations'
+import MakerChecker            from './pages/MakerChecker'
+import IncidentManagement      from './pages/IncidentManagement'
+// Governance
+import GovernanceRegistry      from './pages/GovernanceRegistry'
+import TrustControl            from './pages/TrustControl'
+// System Internals
+import OSConsole               from './pages/OSConsole'
+import UserAccessManagement    from './pages/UserAccessManagement'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Navigate to="/studio" replace />} />
-          <Route path="dashboard"      element={<Dashboard />} />
-          <Route path="command-center" element={<CommandCenter />} />
-          <Route path="live-operations" element={<LiveOperations />} />
-          <Route path="multi-agent-orchestration" element={<MultiAgentOrchestration />} />
-          <Route path="orchestration"  element={<AgentOrchestration />} />
-          <Route path="merchant"       element={<MerchantOnboarding />} />
-          <Route path="print"          element={<PrintRetention />} />
-          <Route path="b2b"            element={<B2BReconciliation />} />
-          <Route path="data"           element={<DataEnrichment />} />
-          <Route path="common-agents"  element={<CommonAgents />} />
-          <Route path="governance"     element={<GovernanceRegistry />} />
-          <Route path="executive"      element={<ExecutiveDeck />} />
-          <Route path="builder"        element={<AgentBuilder />} />
-          <Route path="studio"         element={<ImagineStudio />} />
-          <Route path="agent-pool"     element={<AgentPool />} />
-          <Route path="agent-analyst"  element={<AgentAnalyst />} />
+          <Route index element={<Navigate to="/agent-pool" replace />} />
+
+          {/* Build & Catalog */}
+          <Route path="agent-pool"          element={<AgentPool />} />
+          <Route path="builder"             element={<AgentBuilder />} />
+          <Route path="agent-orchestrator"  element={<AgentOrchestrator />} />
+          <Route path="studio"              element={<ImagineStudio />} />
+
+          {/* Operations */}
+          <Route path="command-center"      element={<CommandCenter />} />
+          <Route path="live-operations"     element={<LiveOperations />} />
+          <Route path="maker-checker"       element={<MakerChecker />} />
+          <Route path="incident-management" element={<IncidentManagement />} />
+
+          {/* Governance */}
+          <Route path="approval-centre"     element={<GovernanceRegistry />} />
+          <Route path="trust-control"       element={<TrustControl />} />
+
+          {/* System Internals */}
+          <Route path="os-console"          element={<OSConsole />} />
+          <Route path="user-access"         element={<UserAccessManagement />} />
         </Route>
       </Routes>
     </BrowserRouter>

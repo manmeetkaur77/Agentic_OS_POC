@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   RefreshCw, Users, Presentation,
-  Zap, ShieldCheck, Activity, Bot, TrendingUp, TrendingDown, ChevronDown,
+  Zap, ShieldCheck, Activity, Bot, TrendingUp, TrendingDown,
   Network, DollarSign, MessageSquare, Send,
   CheckCircle2, Clock, AlertTriangle, Shield, ArrowRight, Sparkles,
 } from 'lucide-react'
-import { AreaChart, Area, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts'
 import useStore from '../store/useStore'
 import {
   ALL_WORKFLOWS, INDIVIDUAL_AGENTS, liveWorkflows, activeAgentCount, dailyExecutions,
@@ -29,12 +29,6 @@ const STAT_TILES = [
   { key: 'cost',      label: 'Cost Avoided Through Automation', value: formatMoney(totalCostAvoided),   delta: '+18%',  icon: TrendingUp,   color: '#10B981' },
   { key: 'stp',       label: 'Straight-Through Processing',     value: `${Math.round(avgWorkflowSla)}%`,   delta: '+8%',   icon: CheckCircle2, color: '#8B5CF6' },
 ]
-
-// Illustrative intraday shape, scaled so its peak lines up with real daily volume
-const activityPeak = Math.round(dailyExecutions / 24 * 4.2)
-const ACTIVITY_DATA = [0.28, 0.6, 0.88, 0.7, 0.75, 1.0, 0.94].map((f, i) => ({
-  time: `${String(9 + i).padStart(2, '0')}:00`, tasks: Math.round(activityPeak * f),
-}))
 
 const ACTIVE_SWARMS = liveWorkflows.map(w => ({
   name: w.name, agents: w.agents.length,
@@ -188,26 +182,6 @@ function StoryCard({ story, onOpen }) {
   )
 }
 
-function ActivityChart() {
-  return (
-    <ResponsiveContainer width="100%" height={220}>
-      <AreaChart data={ACTIVITY_DATA} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
-        <defs>
-          <linearGradient id="cmdActivityGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#1A2340" stopOpacity={0.22} />
-            <stop offset="95%" stopColor="#1A2340" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
-        <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
-        <YAxis tick={{ fontSize: 11, fill: '#718096' }} axisLine={false} tickLine={false} />
-        <Tooltip contentStyle={{ borderRadius: 10, border: '1px solid #E2E8F0', fontSize: 12 }} />
-        <Area type="monotone" dataKey="tasks" stroke="#1A2340" strokeWidth={2.5} fill="url(#cmdActivityGrad)" dot={false} />
-      </AreaChart>
-    </ResponsiveContainer>
-  )
-}
-
 function ToolbarButton({ icon: Icon, label, onClick, primary }) {
   return (
     <button
@@ -342,21 +316,8 @@ export default function CommandCenter() {
         {STAT_TILES.map(({ key, ...t }) => <StatCard key={key} {...t} />)}
       </div>
 
-      {/* ── Activity + Collaboration ── */}
-      <div className="grid grid-cols-2 gap-5">
-        <div className="card p-5">
-          <div className="flex items-start justify-between mb-1">
-            <div>
-              <p className="text-sm font-bold text-[#1A2340]">Agent Activity &amp; Throughput</p>
-              <p className="text-xs text-[#9BA8BA] mt-0.5">Real-time processing metrics across all zones</p>
-            </div>
-            <div className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E2E8F0] text-xs text-[#4A5568] flex-shrink-0">
-              Last 24 Hours <ChevronDown size={12} />
-            </div>
-          </div>
-          <ActivityChart />
-        </div>
-
+      {/* ── Agent Collaboration ── */}
+      <div className="grid grid-cols-1">
         <div className="card p-5">
           <div className="flex items-start justify-between mb-4">
             <div>

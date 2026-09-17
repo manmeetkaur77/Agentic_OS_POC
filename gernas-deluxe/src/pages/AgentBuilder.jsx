@@ -101,7 +101,7 @@ function generateRiskReport(agentName, description, tools) {
 // ─── Velox documentation pages ────────────────────────────────────────────────
 const VELOX_PAGES = [
   { id: 'adk',     title: 'Google Agent Development Kit (ADK) — Integration Guide', space: 'Platform',          updated: '1 day ago',  keywords: ['adk','google','agent','framework','kit'],
-    content: '# Google Agent Development Kit (ADK) — Integration Guide\n\n## Overview\nThe Google ADK is an open-source framework for building production-grade AI agents. All DLX_AGENTIC_OS agents follow ADK patterns.\n\n## Agent Structure\nName: descriptive agent name reflecting its primary function\nSegment: one of merchant, print, b2b, data, or platform\nDescription: 1-2 sentences describing the agent\'s primary purpose and value\n\n## Approved Tools\n- crm-read / crm-write: Salesforce CRM read and write operations\n- email-send: SendGrid transactional and campaign emails\n- kyb-verify: Know-Your-Business verification via Middesk/D&B\n- erp-read / gl-write: SAP/Oracle ERP and General Ledger operations\n- payment-match: Invoice-to-payment fuzzy matching\n- txn-stream: Real-time transaction stream ingestion\n- anomaly-detect: ML-based anomaly detection\n- hold-trigger: Account hold and suspension triggers\n- data-fetch / profile-update: Data enrichment and profile management\n- sales-alert: Sales team notification and escalation\n- report-gen: Automated report generation\n- order-history: Print order history retrieval\n- terminal-config: Payment terminal provisioning\n- propensity-score: ML propensity scoring\n- webhook-send: External webhook dispatch\n\n## System Prompt Template\nYou are [Agent Name] for Deluxe Corporation.\n\nYour responsibilities:\n1. [Primary responsibility]\n2. [Secondary responsibility]\n3. [Escalation conditions]\n\nGuardrails:\n- Never take irreversible actions without human approval\n- Always log actor, timestamp, and rationale for every decision\n- On uncertainty: pause, flag, and surface to human reviewer\n- Comply with all applicable data privacy and compliance requirements\n\n## Getting Started\n1. Define role and capabilities from the documentation\n2. Configure tools from approved registry above\n3. Set guardrails (human review, audit logging, rate limits)\n4. Test in simulation mode before staging\n5. Submit for compliance review' },
+    content: '# Google Agent Development Kit (ADK) — Integration Guide\n\n## Overview\nThe Google ADK is an open-source framework for building production-grade AI agents. All DLX AGENTIC OS agents follow ADK patterns.\n\n## Agent Structure\nName: descriptive agent name reflecting its primary function\nSegment: one of merchant, print, b2b, data, or platform\nDescription: 1-2 sentences describing the agent\'s primary purpose and value\n\n## Approved Tools\n- crm-read / crm-write: Salesforce CRM read and write operations\n- email-send: SendGrid transactional and campaign emails\n- kyb-verify: Know-Your-Business verification via Middesk/D&B\n- erp-read / gl-write: SAP/Oracle ERP and General Ledger operations\n- payment-match: Invoice-to-payment fuzzy matching\n- txn-stream: Real-time transaction stream ingestion\n- anomaly-detect: ML-based anomaly detection\n- hold-trigger: Account hold and suspension triggers\n- data-fetch / profile-update: Data enrichment and profile management\n- sales-alert: Sales team notification and escalation\n- report-gen: Automated report generation\n- order-history: Print order history retrieval\n- terminal-config: Payment terminal provisioning\n- propensity-score: ML propensity scoring\n- webhook-send: External webhook dispatch\n\n## System Prompt Template\nYou are [Agent Name] for Deluxe Corporation.\n\nYour responsibilities:\n1. [Primary responsibility]\n2. [Secondary responsibility]\n3. [Escalation conditions]\n\nGuardrails:\n- Never take irreversible actions without human approval\n- Always log actor, timestamp, and rationale for every decision\n- On uncertainty: pause, flag, and surface to human reviewer\n- Comply with all applicable data privacy and compliance requirements\n\n## Getting Started\n1. Define role and capabilities from the documentation\n2. Configure tools from approved registry above\n3. Set guardrails (human review, audit logging, rate limits)\n4. Test in simulation mode before staging\n5. Submit for compliance review' },
   { id: 'onboard', title: 'SMB Merchant Onboarding — Process BRD',              space: 'Merchant Services', updated: '2 days ago', keywords: ['onboard','merchant','kyb','kyc','smb','terminal'],
     content: '# SMB Merchant Onboarding — Process BRD\n\n## Agent Specification\nName: SMB Onboarding Agent\nSegment: merchant\nDescription: Automates the full SMB merchant onboarding lifecycle from KYB verification to first live transaction, cutting onboarding time from days to hours.\n\n## Tools Required\n- kyb-verify: Business identity verification via D&B and Middesk\n- crm-write: Create merchant record in Salesforce\n- email-send: Send approval/welcome notifications\n- terminal-config: Provision and configure payment terminals\n\n## System Prompt\nYou are an SMB Onboarding Agent for Deluxe Corporation.\n\nResponsibilities:\n1. Receive new merchant applications via webhook trigger\n2. Run KYB verification within 2 minutes of application receipt\n3. Score merchant risk across 12 signals (credit, fraud history, industry, geography)\n4. Risk score below 40: auto-approve and proceed to provisioning\n5. Risk score 40-70: flag for human review within 4 hours\n6. Risk score above 70: auto-decline with detailed explanation\n7. Upon approval: provision terminal, create CRM record, send welcome email with activation link\n\nGuardrails:\n- Never approve without completing full KYB verification\n- Require dual approval for merchants in high-risk industries (gaming, CBD, firearms)\n- Log all decisions with rationale for compliance audit trail\n- Maximum 3 automated retries on any verification failure before escalating to human' },
   { id: 'invoice', title: 'Invoice Reconciliation — Finance Ops Spec',          space: 'B2B Payments',      updated: '5 days ago', keywords: ['invoice','reconcil','finance','payment','gl','erp'],
@@ -163,7 +163,7 @@ const TRIGGER_TYPES = [
 const SAMPLE_AGENT = {
   name:        'Merchant Churn Risk Monitor',
   version:     '1.0.0',
-  author:      'DLX_AGENTIC_OS Team',
+  author:      'DLX AGENTIC OS Team',
   segment:     'merchant',
   description: 'Monitors merchant transaction activity and identifies accounts showing early churn signals — declining volumes, missed settlements, or reduced login frequency. Triggers automated retention campaigns and routes high-value accounts to a named account manager before they disengage.',
   systemPrompt: `You are a Merchant Churn Risk Monitor for Deluxe Corporation.
@@ -958,7 +958,7 @@ function PhaseProd({ form, onDeploy, fromWorkflow }) {
   const configJson = JSON.stringify({
     name:          form.name,
     version:       form.version || '1.0.0',
-    author:        form.author  || 'DLX_AGENTIC_OS Team',
+    author:        form.author  || 'DLX AGENTIC OS Team',
     segment:       form.segment,
     model:         form.model,
     skills:        form.skills   || [],
@@ -1088,15 +1088,15 @@ const BUILD_OPTIONS = [
   },
   {
     key: 'swarm', icon: GitMerge, color: '#7C3AED', badge: 'RECOMMENDED',
-    title: 'Multi-Agent Swarm', tagline: 'Best for complex, multi-step workflows',
+    title: 'Multi-Agent Orchestrator', tagline: 'Best for complex, multi-step workflows',
     bullets: ['End-to-end loan processing', 'Multi-agent fraud council', 'KYC verification pipeline', 'Decisions needing consensus'],
     cta: 'Open Agent Orchestrator',
   },
 ]
 
 const QUICK_NAV_TILES = [
-  { key: 'studio', icon: Sparkles, title: 'Imagination Studio', sub: 'Design process → auto-generate swarm', gradient: 'linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)' },
-  { key: 'discover', icon: Globe,  title: 'Discover Hub',       sub: 'Browse agents & swarm templates',      gradient: 'linear-gradient(135deg,#10B981 0%,#047857 100%)' },
+  { key: 'studio', icon: Sparkles, title: 'Imagination Studio', sub: 'Design process → auto-generate orchestration', gradient: 'linear-gradient(135deg,#7C3AED 0%,#5B21B6 100%)' },
+  { key: 'discover', icon: Globe,  title: 'Discover Hub',       sub: 'Browse agents & orchestrator templates',       gradient: 'linear-gradient(135deg,#10B981 0%,#047857 100%)' },
   { key: 'single', icon: Bot,      title: 'Single Agent',       sub: 'Build focused, specialized agent',     gradient: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)' },
   { key: 'swarm', icon: GitMerge,  title: 'Agent Orchestrator', sub: 'Compose topologies & agent roles',     gradient: 'linear-gradient(135deg,#C8102E 0%,#7C3AED 100%)' },
 ]
@@ -1122,7 +1122,7 @@ function BuildModeChooser({ navigate, onPickSingle, onPickSwarm }) {
           </div>
           <div>
             <h1 className="text-white font-display text-xl font-bold">DLX Agent Builder</h1>
-            <p className="text-white/50 text-xs mt-0.5">Powered by MAF ADK 2.5 &middot; Low-Code / No-Code &middot; Control-Plane Governed</p>
+            <p className="text-white/50 text-xs mt-0.5">Low-Code / No-Code &middot; Control-Plane Governed</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -1223,7 +1223,7 @@ export default function AgentBuilder() {
     model:       template.model,
     skills:      [...(template.tools    || [])],
     triggers:    [...(template.triggers || [])],
-    systemPrompt: '', maxConcurrent: 3, version: '1.0.0', author: 'DLX_AGENTIC_OS Team',
+    systemPrompt: '', maxConcurrent: 3, version: '1.0.0', author: 'DLX AGENTIC OS Team',
     env: 'staging', dataSource: 'anonymized', validationPeriod: '48h',
     guardrail_humanReview: true, guardrail_auditLog: true,
     guardrail_rateLimitEmail: false, guardrail_dryRunMode: false, guardrail_alertOnException: true,

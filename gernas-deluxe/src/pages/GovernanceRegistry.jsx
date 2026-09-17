@@ -27,7 +27,7 @@ const FRAMEWORKS = [
     label: 'PCI DSS v4.0',
     desc:  'Payment security',
     color: '#0EA5E9',
-    detail: 'The Payment Card Industry Data Security Standard v4.0 mandates security controls for all entities that store, process, or transmit cardholder data. For DLX_AGENTIC_OS agents, this requires encrypted data transmission, strict access control, and regular security testing of any agent that handles payment terminal configurations, transaction streams, or cardholder information. Agents must log all access to payment data and support quarterly security scans.',
+    detail: 'The Payment Card Industry Data Security Standard v4.0 mandates security controls for all entities that store, process, or transmit cardholder data. For DLX AGENTIC OS agents, this requires encrypted data transmission, strict access control, and regular security testing of any agent that handles payment terminal configurations, transaction streams, or cardholder information. Agents must log all access to payment data and support quarterly security scans.',
   },
   {
     label: 'SOX',
@@ -57,7 +57,7 @@ const FRAMEWORKS = [
     label: 'SOC 2 Type II',
     desc:  'Security & uptime',
     color: '#6366F1',
-    detail: 'A Service Organization Control 2 Type II audit verifies that security, availability, processing integrity, confidentiality, and privacy controls operate effectively over a defined period (typically 6–12 months). DLX_AGENTIC_OS agents must meet criteria for logical access controls, change management, risk assessment, and incident response. Any agent deployed to production must be covered by the platform\'s SOC 2 boundary and subject to annual third-party auditor review.',
+    detail: 'A Service Organization Control 2 Type II audit verifies that security, availability, processing integrity, confidentiality, and privacy controls operate effectively over a defined period (typically 6–12 months). DLX AGENTIC OS agents must meet criteria for logical access controls, change management, risk assessment, and incident response. Any agent deployed to production must be covered by the platform\'s SOC 2 boundary and subject to annual third-party auditor review.',
   },
 ]
 
@@ -508,7 +508,7 @@ export default function GovernanceRegistry() {
       {/* ── Compliance tab ── */}
       {activeTab === 'registry' && (
         <div className="space-y-3">
-          <p className="text-xs text-[#718096]">Click any framework card to read its compliance requirements for DLX_AGENTIC_OS agents.</p>
+          <p className="text-xs text-[#718096]">Click any framework card to read its compliance requirements for DLX AGENTIC OS agents.</p>
           <div className="grid grid-cols-3 gap-4">
             {FRAMEWORKS.map(f => {
               const isOpen = openFramework === f.label

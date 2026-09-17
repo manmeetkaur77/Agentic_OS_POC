@@ -516,7 +516,7 @@ export default function AgentOrchestrator() {
 
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 className="font-display text-xl font-bold text-[#1A2340]">Swarm Builder</h1>
+          <h1 className="font-display text-xl font-bold text-[#1A2340]">Agent Orchestrator</h1>
           <p className="text-sm text-[#718096] mt-1">Design multi-agent collaboration patterns</p>
         </div>
         <button onClick={() => navigate('/agent-pool')} className="text-xs text-[#718096] flex items-center gap-1 hover:text-[#1A2340]">

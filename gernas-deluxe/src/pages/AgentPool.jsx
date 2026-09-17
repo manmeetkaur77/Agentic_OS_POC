@@ -5,9 +5,9 @@ import {
   Search, Layers, CheckCircle, AlertCircle, Zap, Bot,
   CreditCard, Printer, FileText, Database, Shield,
   Plus, ChevronRight, Play, Edit3,
-  GitMerge, X, Activity, Terminal,
-  Plug, Package, Link2, Mail, Globe, Cpu, Tag,
-  Clock, Users, BarChart2, Settings, Code, CheckCheck,
+  GitMerge, X, Terminal,
+  Plug, Link2, Mail, Globe, Cpu, Tag,
+  Clock, Users, BarChart2, Settings, Code,
   Wrench, Server, Cloud, Lock, Upload, AlertTriangle,
   Award, LayoutDashboard, TrendingUp, Loader,
   Sparkles, ArrowUpRight, List, LayoutGrid as GridIcon
@@ -15,7 +15,7 @@ import {
 import useStore from '../store/useStore'
 
 import {
-  segColors, segIcons, ALL_WORKFLOWS, INDIVIDUAL_AGENTS, TOOLS_MCP, BUNDLES,
+  segColors, segIcons, ALL_WORKFLOWS, INDIVIDUAL_AGENTS, TOOLS_MCP, SEGMENTS,
   AGENT_CATEGORY_ICON, ACCESS_CHANNELS, estimateAvgTime, estimateKYA,
 } from '../data/platformData'
 
@@ -287,7 +287,7 @@ function AgentDetailModal({ agent, onClose }) {
               {agent.authors?.length > 1 ? 'Authors' : 'Author'}
             </p>
             <div className="flex flex-col gap-1.5">
-              {(agent.authors?.length > 0 ? agent.authors : ['DLX_AGENTIC_OS Team']).map(a => (
+              {(agent.authors?.length > 0 ? agent.authors : ['DLX AGENTIC OS Team']).map(a => (
                 <div key={a} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#F7F8FA] border border-[#E2E8F0]">
                   <Tag size={12} className="text-[#9BA8BA]" />
                   <span className="text-sm font-semibold text-[#1A2340]">{a}</span>
@@ -530,34 +530,6 @@ function AgentListRow({ agent, onClick, onDeploy }) {
         <ArrowUpRight size={12} /> Deploy
       </button>
     </div>
-  )
-}
-
-/* ── Bundle Card ── */
-function BundleCard({ bundle, onClick }) {
-  const color = segColors[bundle.segmentKey] || '#C8102E'
-  return (
-    <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }} onClick={onClick}
-      className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden cursor-pointer hover:border-[#CBD5E0] hover:shadow-md transition-all">
-      <div className="h-1" style={{ background: color }} />
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}15` }}>
-            <Package size={17} style={{ color }} />
-          </div>
-          {bundle.status === 'incomplete'
-            ? <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700">Under Review</span>
-            : <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">Ready</span>}
-        </div>
-        <p className="text-sm font-bold text-[#1A2340] leading-tight">{bundle.name}</p>
-        <p className="text-xs text-[#718096] mt-1.5 line-clamp-2 leading-relaxed">{bundle.description}</p>
-        <div className="flex items-center gap-4 mt-4 pt-3 border-t border-[#F0F2F5]">
-          <span className="flex items-center gap-1.5 text-xs text-[#4A5568]"><Bot size={12} className="text-[#9BA8BA]" /> {bundle.agentCount} agents</span>
-          <span className="flex items-center gap-1.5 text-xs text-[#4A5568]"><Plug size={12} className="text-[#9BA8BA]" /> {bundle.toolCount} tools</span>
-          <ChevronRight size={13} className="text-[#CBD5E0] ml-auto" />
-        </div>
-      </div>
-    </motion.div>
   )
 }
 
@@ -989,6 +961,246 @@ function EvaluateModal({ workflow, allAgents, onClose, onFixWithAI }) {
   )
 }
 
+/* ── Bring Your Existing Flows — upload a spec, review/edit what was fetched,
+   watch it get scanned, then land in the Under Review queue ── */
+const FLOW_SCAN_STEPS = [
+  'Parsing specification file',
+  'Matching agents against the catalog',
+  'Validating tool permissions',
+  'Running compliance guardrail checks',
+]
+
+function parseFlowSpecFile(rawText, fileName) {
+  try {
+    const raw = JSON.parse(rawText)
+    const w = (raw.workflow && typeof raw.workflow === 'object')
+      ? { ...raw.workflow, agents: raw.agents || raw.workflow.agents || [] }
+      : raw
+    const agents = (w.agents || w.chain || []).map((a, ai) => ({
+      name: a.name || a.agent_name || `Agent ${ai + 1}`,
+      role: a.role || a.description || '',
+    }))
+    return {
+      name:        w.name || w.workflow_name || fileName.replace(/\.[^.]+$/, ''),
+      description: w.description || w.summary || '',
+      segmentKey:  w.segment_key || w.segmentKey || 'platform',
+      agents,
+      tools:       [...new Set((w.agents || w.chain || []).flatMap(a => a.tools || []))],
+    }
+  } catch {
+    // Not a recognisable JSON spec — still let the user proceed with an empty, editable draft
+    return { name: fileName.replace(/\.[^.]+$/, ''), description: '', segmentKey: 'platform', agents: [], tools: [] }
+  }
+}
+
+function BringFlowModal({ onClose, onSubmitted }) {
+  const [stage, setStage]     = useState('upload')   // upload | review | scanning | done
+  const [fileName, setFileName] = useState('')
+  const [draft, setDraft]     = useState(null)
+  const [scanStep, setScanStep] = useState(0)
+  const fileRef = useRef(null)
+
+  const handleFile = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setFileName(file.name)
+    const reader = new FileReader()
+    reader.onload = (ev) => {
+      setDraft(parseFlowSpecFile(String(ev.target.result), file.name))
+      setStage('review')
+    }
+    reader.readAsText(file)
+  }
+
+  useEffect(() => {
+    if (stage !== 'scanning') return
+    setScanStep(0)
+    const timers = FLOW_SCAN_STEPS.map((_, i) => setTimeout(() => setScanStep(i + 1), (i + 1) * 650))
+    const finish = setTimeout(() => setStage('done'), FLOW_SCAN_STEPS.length * 650 + 500)
+    return () => { timers.forEach(clearTimeout); clearTimeout(finish) }
+  }, [stage])
+
+  const updateDraft  = (patch) => setDraft(prev => ({ ...prev, ...patch }))
+  const updateAgent  = (i, patch) => setDraft(prev => ({ ...prev, agents: prev.agents.map((a, ai) => ai === i ? { ...a, ...patch } : a) }))
+  const removeAgent  = (i) => setDraft(prev => ({ ...prev, agents: prev.agents.filter((_, ai) => ai !== i) }))
+  const addAgentRow  = () => setDraft(prev => ({ ...prev, agents: [...prev.agents, { name: '', role: '' }] }))
+  const removeTool   = (t) => setDraft(prev => ({ ...prev, tools: prev.tools.filter(x => x !== t) }))
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: 'blur(10px)', background: 'rgba(10,18,40,0.72)' }}
+      onClick={e => e.target === e.currentTarget && stage !== 'scanning' && onClose()}>
+      <motion.div initial={{ opacity: 0, scale: 0.93, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 24 }} transition={{ duration: 0.25, ease: 'easeOut' }}
+        className="bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ width: '92vw', maxWidth: 640, maxHeight: '90vh', boxShadow: '0 40px 100px rgba(0,0,0,0.45)' }}>
+
+        {/* Header */}
+        <div className="px-6 py-5 flex items-center justify-between flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #1A2340 0%, #2D3A5C 100%)' }}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+              <Upload size={18} className="text-white" />
+            </div>
+            <div>
+              <p className="text-white font-bold text-base leading-tight">Bring your existing flows</p>
+              <p className="text-white/50 text-xs mt-0.5">
+                {stage === 'upload'    && 'Upload a workflow spec to bring it into Discover Hub'}
+                {stage === 'review'    && 'Confirm what we found — edit anything before scanning'}
+                {stage === 'scanning'  && 'Scanning against the live catalog…'}
+                {stage === 'done'      && 'Ready for compliance review'}
+              </p>
+            </div>
+          </div>
+          {stage !== 'scanning' && (
+            <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all flex-shrink-0">
+              <X size={15} className="text-white" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-6">
+          {/* ── Stage 1: Upload ── */}
+          {stage === 'upload' && (
+            <div className="flex flex-col items-center text-center py-8">
+              <div className="w-16 h-16 rounded-2xl bg-[#F7F8FA] border-2 border-dashed border-[#CBD5E0] flex items-center justify-center mb-4">
+                <Upload size={24} className="text-[#9BA8BA]" />
+              </div>
+              <p className="text-sm font-semibold text-[#1A2340]">Upload your workflow specification</p>
+              <p className="text-xs text-[#9BA8BA] mt-1.5 max-w-xs">A JSON export from your existing automation tooling — we'll fetch the name, agents and tools so you can confirm them.</p>
+              <button onClick={() => fileRef.current?.click()}
+                className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+                style={{ background: '#C8102E' }}>
+                <Upload size={14} /> Choose Spec File
+              </button>
+              <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={handleFile} />
+            </div>
+          )}
+
+          {/* ── Stage 2: Review / edit fetched info ── */}
+          {stage === 'review' && draft && (
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50 border border-emerald-200">
+                <CheckCircle size={13} className="text-emerald-600 flex-shrink-0" />
+                <p className="text-xs text-emerald-700"><strong>{fileName}</strong> parsed — review the fetched details below.</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Workflow Name</label>
+                <input value={draft.name} onChange={e => updateDraft({ name: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:border-[#C8102E]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Description</label>
+                <textarea value={draft.description} onChange={e => updateDraft({ description: e.target.value })}
+                  rows={2} placeholder="What does this workflow do?"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-sm resize-none focus:outline-none focus:border-[#C8102E]" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Segment</label>
+                <select value={draft.segmentKey} onChange={e => updateDraft({ segmentKey: e.target.value })}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-sm bg-white focus:outline-none focus:border-[#C8102E]">
+                  {SEGMENTS.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                </select>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-semibold text-[#718096]">Agents Detected ({draft.agents.length})</label>
+                  <button onClick={addAgentRow} className="text-xs font-semibold text-[#C8102E] hover:underline">+ Add agent</button>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {draft.agents.length === 0 && (
+                    <p className="text-xs text-[#9BA8BA] px-3.5 py-3 rounded-xl bg-[#F7F8FA]">No agents detected in the spec — add them manually or continue without.</p>
+                  )}
+                  {draft.agents.map((a, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <input value={a.name} onChange={e => updateAgent(i, { name: e.target.value })} placeholder="Agent name"
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#E2E8F0] text-xs font-semibold focus:outline-none focus:border-[#C8102E]" />
+                      <input value={a.role} onChange={e => updateAgent(i, { role: e.target.value })} placeholder="Role / description"
+                        className="flex-1 min-w-0 px-3 py-2 rounded-lg border border-[#E2E8F0] text-xs text-[#718096] focus:outline-none focus:border-[#C8102E]" />
+                      <button onClick={() => removeAgent(i)} className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 flex-shrink-0 transition-all">
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {draft.tools.length > 0 && (
+                <div>
+                  <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Tools Detected ({draft.tools.length})</label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {draft.tools.map(t => (
+                      <span key={t} className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-mono bg-[#F1F5F9] text-[#475569]">
+                        {t}
+                        <button onClick={() => removeTool(t)} className="hover:text-red-500"><X size={10} /></button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── Stage 3: Scanning ── */}
+          {stage === 'scanning' && (
+            <div className="flex flex-col gap-3 py-6">
+              {FLOW_SCAN_STEPS.map((label, i) => {
+                const done = scanStep > i
+                const active = scanStep === i
+                return (
+                  <div key={label} className="flex items-center gap-3 px-4 py-3 rounded-xl"
+                    style={{ background: done ? '#F0FDF4' : active ? '#EFF6FF' : '#F7F8FA' }}>
+                    {done
+                      ? <CheckCircle size={16} className="text-emerald-500 flex-shrink-0" />
+                      : active
+                        ? <Loader size={16} className="text-[#1D4ED8] animate-spin flex-shrink-0" />
+                        : <div className="w-4 h-4 rounded-full border-2 border-[#E2E8F0] flex-shrink-0" />}
+                    <span className={`text-sm ${done ? 'text-emerald-700 font-medium' : active ? 'text-[#1D4ED8] font-semibold' : 'text-[#9BA8BA]'}`}>{label}</span>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          {/* ── Stage 4: Done ── */}
+          {stage === 'done' && draft && (
+            <div className="flex flex-col items-center text-center py-8">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mb-4">
+                <AlertCircle size={26} className="text-amber-500" />
+              </div>
+              <p className="text-base font-bold text-[#1A2340]">"{draft.name}" is now Under Review</p>
+              <p className="text-xs text-[#718096] mt-1.5 max-w-xs">Scan complete — it's been added to Discover Hub's workflow list, flagged Under Review until compliance signs off in Approval Centre.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer actions */}
+        {stage === 'review' && (
+          <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-between flex-shrink-0">
+            <button onClick={onClose} className="text-xs font-semibold text-[#9BA8BA] hover:text-[#4A5568]">Cancel</button>
+            <button onClick={() => setStage('scanning')} disabled={!draft.name.trim()}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-40 hover:opacity-90"
+              style={{ background: '#1A2340' }}>
+              <Zap size={14} /> Run Scan
+            </button>
+          </div>
+        )}
+        {stage === 'done' && (
+          <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-end flex-shrink-0">
+            <button onClick={() => onSubmitted(draft)}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
+              style={{ background: '#1A2340' }}>
+              View in Discover Hub
+            </button>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
 /* ── Author Dashboard Tab ── */
 function AuthorDashboard({ allAgents, allWorkflows, allTools }) {
   const [selected, setSelected] = useState(null)
@@ -1120,13 +1332,12 @@ export default function AgentPool() {
   const [toolCat,   setToolCat]   = useState('All')
   const [toolTile,  setToolTile]  = useState('connectors')  // 'connectors' | 'ai' | 'mcp'
   const [agentView, setAgentView] = useState('grid')        // 'grid' | 'list'
-  const [bundleSearch, setBundleSearch] = useState('')
   const [detailWf,   setDetailWf]   = useState(null)
   const [detailAg,   setDetailAg]   = useState(null)
   const [detailTool, setDetailTool] = useState(null)
   const [importedWorkflows, setImportedWorkflows] = useState([])
   const [evaluateWf, setEvaluateWf] = useState(null)
-  const importInputRef = useRef(null)
+  const [flowModalOpen, setFlowModalOpen] = useState(false)
 
   const TOOL_TILE_GROUPS = {
     connectors: { label: 'Connectors',  categories: ['Connector', 'Third-Party', 'Data'], color: '#10B981' },
@@ -1140,7 +1351,7 @@ export default function AgentPool() {
 
   const handleDeployWorkflow = (wf) => {
     deployWorkflow(wf)
-    addToast({ type: 'success', title: 'Workflow submitted', message: `${wf.name} is pending approval — visible in Governance Registry.` })
+    addToast({ type: 'success', title: 'Workflow submitted', message: `${wf.name} is pending approval — visible in Approval Centre.` })
   }
 
   const highlightId    = location.state?.highlightId    || null
@@ -1188,7 +1399,7 @@ export default function AgentPool() {
 
   /* Reset search + filters when tab (or tool tile group) changes */
   useEffect(() => {
-    setWfSearch(''); setAgSearch(''); setToolSearch(''); setToolCat('All'); setBundleSearch('')
+    setWfSearch(''); setAgSearch(''); setToolSearch(''); setToolCat('All')
     setWfStatusFilter('all'); setStatusFilter('all'); setToolStatusFilter('all')
     contentRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
   }, [tab, toolTile])
@@ -1259,10 +1470,6 @@ export default function AgentPool() {
       : t.status === 'connected'
     return mGroup && mCat && mSearch && mStatus
   })
-  const filteredBundles = BUNDLES.filter(b =>
-    !bundleSearch || b.name.toLowerCase().includes(bundleSearch.toLowerCase()) || b.segment.toLowerCase().includes(bundleSearch.toLowerCase())
-  )
-
   /* Pipeline → Agent profile navigation */
   const handleViewAgent = (agentName) => {
     const match = allAgents.find(a => a.name === agentName)
@@ -1275,60 +1482,34 @@ export default function AgentPool() {
     }
   }
 
-  /* Import workflow from JSON config file */
-  const handleImportFile = (e) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => {
-      try {
-        const raw = JSON.parse(ev.target.result)
-        // Support { workflow: {...}, agents: [...] } envelope as well as flat/array formats
-        const normalize = (w) => {
-          if (w.workflow && typeof w.workflow === 'object') {
-            return { ...w.workflow, agents: w.agents || w.workflow.agents || [] }
-          }
-          return w
-        }
-        const workflows = Array.isArray(raw) ? raw.map(normalize) : [normalize(raw)]
-        const imported = workflows.map((w, i) => ({
-          id:         `imported-${Date.now()}-${i}`,
-          name:       w.name || w.workflow_name || `Imported Workflow ${i + 1}`,
-          description:w.description || w.summary || '',
-          segmentKey: w.segment_key || w.segmentKey || 'platform',
-          segment:    w.segment || 'Imported',
-          status:     'incomplete',
-          sla:        w.sla || null,
-          tasksPerDay:w.tasks_per_day || w.tasksPerDay || 0,
-          lastRun:    'Not yet deployed',
-          avgRunTime: '—',
-          trigger:    w.trigger || 'Imported Config',
-          output:     w.output || 'Pending Deployment',
-          agents:     (w.agents || w.chain || []).map((a, ai) => ({
-            id:     a.id || `imp-agent-${ai}`,
-            name:   a.name || a.agent_name || `Agent ${ai + 1}`,
-            role:   a.role || a.description || '',
-            tools:  a.tools || [],
-            status: a.status || 'full',
-          })),
-          authors:     w.authors || [],
-          isImported:  true,
-        }))
-        setImportedWorkflows(prev => [...imported, ...prev])
-      } catch {
-        alert('Invalid JSON file. Please provide a valid workflow config.')
-      }
+  /* Land a "Bring your existing flows" submission as an Under Review workflow */
+  const handleFlowSubmitted = (draft) => {
+    const segment = SEGMENTS.find(s => s.key === draft.segmentKey)
+    const wf = {
+      id:          `imported-${Date.now()}`,
+      name:        draft.name || 'Imported Workflow',
+      description: draft.description,
+      segmentKey:  draft.segmentKey,
+      segment:     segment?.label || 'Platform',
+      status:      'incomplete',
+      sla:         null,
+      tasksPerDay: 0,
+      lastRun:     'Not yet deployed',
+      avgRunTime:  '—',
+      trigger:     'Imported Config',
+      output:      'Pending Deployment',
+      agents:      draft.agents.map((a, ai) => ({
+        id: `imp-agent-${ai}`, name: a.name || `Agent ${ai + 1}`, role: a.role, tools: [], status: 'full',
+      })),
+      authors:     [],
+      isImported:  true,
     }
-    reader.readAsText(file)
-    e.target.value = ''
+    setImportedWorkflows(prev => [wf, ...prev])
+    setFlowModalOpen(false)
+    setTab('workflows')
+    setWfStatusFilter('under-review')
+    addToast({ type: 'success', title: 'Flow brought in ✓', message: `"${wf.name}" was scanned and is now under review.` })
   }
-
-  /* Summary stats */
-  const activeAgents    = allAgents.filter(a => a.status === 'active').length
-  const dailyExecutions = allAgents.reduce((sum, a) => sum + (a.tasksToday || 0), 0)
-  const avgAccuracy     = allAgents.length
-    ? (allAgents.reduce((sum, a) => sum + (a.successRate || 0), 0) / allAgents.length)
-    : 0
 
   /* Discover Hub category tiles */
   const connectorsCount = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.connectors.categories.includes(t.category)).length
@@ -1346,9 +1527,7 @@ export default function AgentPool() {
       active: tab === 'tools' && toolTile === 'ai',            onClick: () => { setTab('tools'); setToolTile('ai') } },
     { key: 'mcp',        label: 'MCP Servers', icon: Server,          color: TOOL_TILE_GROUPS.mcp.color, count: mcpCount,
       active: tab === 'tools' && toolTile === 'mcp',           onClick: () => { setTab('tools'); setToolTile('mcp') } },
-    { key: 'bundles',    label: 'Bundles',     icon: Package,         color: '#F59E0B', count: BUNDLES.length,
-      active: tab === 'bundles',                               onClick: () => setTab('bundles') },
-    { key: 'dashboard',  label: 'Dashboard',   icon: LayoutDashboard, color: '#10B981', count: null,
+    { key: 'dashboard',  label: 'Leaderboard', icon: LayoutDashboard, color: '#10B981', count: null,
       active: tab === 'dashboard',                             onClick: () => setTab('dashboard') },
   ]
 
@@ -1379,8 +1558,9 @@ export default function AgentPool() {
         )}
       </AnimatePresence>
 
-      {/* Hidden file input for import */}
-      <input ref={importInputRef} type="file" accept=".json" className="hidden" onChange={handleImportFile} />
+      <AnimatePresence>
+        {flowModalOpen && <BringFlowModal onClose={() => setFlowModalOpen(false)} onSubmitted={handleFlowSubmitted} />}
+      </AnimatePresence>
 
       {/* ── Page Header / Banner ── */}
       <div className="rounded-2xl px-6 py-4 mb-4 relative overflow-hidden"
@@ -1395,25 +1575,11 @@ export default function AgentPool() {
                 <h1 className="text-white font-display text-lg font-bold">Discover Hub</h1>
                 <p className="text-white/50 text-xs">Enterprise AI Assets &middot; Agents &middot; Tools &middot; Integrations</p>
               </div>
-              <div className="flex items-center gap-5 flex-wrap mt-1">
-                <span className="flex items-center gap-1.5 text-xs text-white/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0" />
-                  <span className="font-bold text-white">{activeAgents}</span> Production Agents
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-white/80">
-                  <Activity size={11} className="text-emerald-400 flex-shrink-0" />
-                  <span className="font-bold text-white">{dailyExecutions >= 1000 ? (dailyExecutions / 1000).toFixed(1) + 'K+' : dailyExecutions}</span> Daily Executions
-                </span>
-                <span className="flex items-center gap-1.5 text-xs text-white/80">
-                  <CheckCheck size={11} className="text-emerald-400 flex-shrink-0" />
-                  <span className="font-bold text-white">{avgAccuracy.toFixed(1)}%</span> Avg Accuracy
-                </span>
-              </div>
             </div>
           </div>
-          <button onClick={() => navigate('/builder')}
+          <button onClick={() => setFlowModalOpen(true)}
             className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#1A2340] bg-white hover:bg-white/90 transition-all flex-shrink-0">
-            <Zap size={13} /> Create New Agent
+            <Upload size={13} /> Bring your existing flows.
           </button>
         </div>
       </div>
@@ -1429,7 +1595,7 @@ export default function AgentPool() {
           boxShadow: '0 4px 20px rgba(26,35,64,0.06)',
         }}
       >
-        <div className="grid grid-cols-7 gap-2.5">
+        <div className="grid grid-cols-6 gap-2.5">
           {TILES.map(t => {
             const Icon = t.icon
             return (
@@ -1487,11 +1653,6 @@ export default function AgentPool() {
                     placeholder="Search workflows…"
                     className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#C8102E]" />
                 </div>
-                <button onClick={() => importInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
-                  style={{ background: '#C8102E' }}>
-                  <Upload size={12} />Upload Existing Specs
-                </button>
               </div>
               {/* Status filter chips */}
               <div className="flex items-center gap-2 pt-1 pb-2">
@@ -1565,11 +1726,6 @@ export default function AgentPool() {
                     <List size={14} />
                   </button>
                 </div>
-                <button onClick={() => importInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
-                  style={{ background: '#0EA5E9' }}>
-                  <Upload size={12} />Upload Existing Specs
-                </button>
               </div>
               {/* Status filter */}
               <div className="flex items-center gap-2 pt-1 pb-2">
@@ -1647,11 +1803,6 @@ export default function AgentPool() {
                     </button>
                   ))}
                 </div>
-                <button onClick={() => importInputRef.current?.click()}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all cursor-pointer"
-                  style={{ background: activeToolGroup.color }}>
-                  <Upload size={12} />Upload Existing Specs
-                </button>
               </div>
               {/* Status filter chips */}
               <div className="flex items-center gap-2 pt-1 pb-3">
@@ -1682,41 +1833,6 @@ export default function AgentPool() {
               <div className="grid grid-cols-4 gap-3">
                 {filteredTools.map(tool => (
                   <ToolCard key={tool.id} tool={tool} onClick={() => setDetailTool(tool)} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {/* ── TAB: BUNDLES ── */}
-          {tab === 'bundles' && (
-            <motion.div key="bundles"
-              initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
-              transition={{ duration: 0.2 }}>
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#FFFBEB' }}>
-                    <Package size={14} style={{ color: '#F59E0B' }} />
-                  </div>
-                  <div>
-                    <p className="text-base font-bold text-[#1A2340]">Bundles</p>
-                    <p className="text-xs text-[#718096]">Curated agent + tool packages that solve one use case end-to-end</p>
-                  </div>
-                </div>
-                <div className="flex-1" />
-                <div className="relative w-56">
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#718096]" />
-                  <input value={bundleSearch} onChange={e => setBundleSearch(e.target.value)}
-                    placeholder="Search bundles…"
-                    className="w-full pl-8 pr-3 py-2 text-xs border border-[#E2E8F0] rounded-xl bg-white focus:outline-none focus:border-[#F59E0B]" />
-                </div>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                {filteredBundles.map(bundle => (
-                  <BundleCard key={bundle.id} bundle={bundle}
-                    onClick={() => {
-                      const wf = allDisplayWorkflows.find(w => w.id === bundle.workflowId) || ALL_WORKFLOWS.find(w => w.id === bundle.workflowId)
-                      if (wf) setDetailWf(wf)
-                    }} />
                 ))}
               </div>
             </motion.div>

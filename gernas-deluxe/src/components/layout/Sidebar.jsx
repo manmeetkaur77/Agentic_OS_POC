@@ -3,7 +3,7 @@ import {
   Layers, Hammer, Network, Sparkles,
   LayoutGrid, Activity, Users, AlertOctagon,
   Shield, ShieldCheck,
-  Terminal, KeyRound,
+  KeyRound,
 } from 'lucide-react'
 
 // Matches the platform architecture exactly: 4 groups, 12 components. Nothing here
@@ -26,7 +26,6 @@ const navItems = [
   { path: '/trust-control',   label: 'Trust & Control',  icon: ShieldCheck, badge: null },
 
   { divider: true, label: 'SYSTEM INTERNALS' },
-  { path: '/os-console',  label: 'OS Console',              icon: Terminal, badge: null },
   { path: '/user-access', label: 'User & Access Management', icon: KeyRound, badge: null },
 ]
 
@@ -40,8 +39,7 @@ export default function Sidebar() {
             <span className="text-white font-black text-xs tracking-tight leading-none">dlx</span>
           </div>
           <div>
-            <p className="text-white font-bold text-sm leading-tight tracking-wide">DLX_AGENTIC_OS</p>
-            <p className="text-white/40 text-xs">Agentic Platform</p>
+            <p className="text-white font-bold text-sm leading-tight tracking-wide">DLX AGENTIC OS</p>
           </div>
         </div>
       </div>
@@ -97,7 +95,7 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-5 py-4 border-t border-white/10">
-        <p className="text-white/30 text-xs">Powered by DLX_AGENTIC_OS</p>
+        <p className="text-white/30 text-xs">Powered by DLX AGENTIC OS</p>
       </div>
     </aside>
   )

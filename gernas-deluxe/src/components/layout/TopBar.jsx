@@ -2,26 +2,25 @@ import { Bell, ChevronRight } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 
 const breadcrumbs = {
-  '/agent-pool':          ['DLX_AGENTIC_OS', 'Build & Catalog', 'Discover Hub'],
-  '/builder':             ['DLX_AGENTIC_OS', 'Build & Catalog', 'Agent Builder'],
-  '/agent-orchestrator':  ['DLX_AGENTIC_OS', 'Build & Catalog', 'Agent Orchestrator'],
-  '/studio':              ['DLX_AGENTIC_OS', 'Build & Catalog', 'Imagination Studio'],
+  '/agent-pool':          ['DLX AGENTIC OS', 'Build & Catalog', 'Discover Hub'],
+  '/builder':             ['DLX AGENTIC OS', 'Build & Catalog', 'Agent Builder'],
+  '/agent-orchestrator':  ['DLX AGENTIC OS', 'Build & Catalog', 'Agent Orchestrator'],
+  '/studio':              ['DLX AGENTIC OS', 'Build & Catalog', 'Imagination Studio'],
 
-  '/command-center':      ['DLX_AGENTIC_OS', 'Operations', 'Command Center'],
-  '/live-operations':     ['DLX_AGENTIC_OS', 'Operations', 'Live Operations'],
-  '/maker-checker':       ['DLX_AGENTIC_OS', 'Operations', 'Maker-Checker'],
-  '/incident-management': ['DLX_AGENTIC_OS', 'Operations', 'Incident Management'],
+  '/command-center':      ['DLX AGENTIC OS', 'Operations', 'Command Center'],
+  '/live-operations':     ['DLX AGENTIC OS', 'Operations', 'Live Operations'],
+  '/maker-checker':       ['DLX AGENTIC OS', 'Operations', 'Maker-Checker'],
+  '/incident-management': ['DLX AGENTIC OS', 'Operations', 'Incident Management'],
 
-  '/approval-centre':     ['DLX_AGENTIC_OS', 'Governance', 'Approval Centre'],
-  '/trust-control':       ['DLX_AGENTIC_OS', 'Governance', 'Trust & Control'],
+  '/approval-centre':     ['DLX AGENTIC OS', 'Governance', 'Approval Centre'],
+  '/trust-control':       ['DLX AGENTIC OS', 'Governance', 'Trust & Control'],
 
-  '/os-console':          ['DLX_AGENTIC_OS', 'System Internals', 'OS Console'],
-  '/user-access':         ['DLX_AGENTIC_OS', 'System Internals', 'User & Access Management'],
+  '/user-access':         ['DLX AGENTIC OS', 'System Internals', 'User & Access Management'],
 }
 
 export default function TopBar() {
   const location = useLocation()
-  const crumbs = breadcrumbs[location.pathname] || ['DLX_AGENTIC_OS']
+  const crumbs = breadcrumbs[location.pathname] || ['DLX AGENTIC OS']
 
   return (
     <header

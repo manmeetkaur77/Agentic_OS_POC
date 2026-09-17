@@ -14,7 +14,6 @@ import IncidentManagement      from './pages/IncidentManagement'
 import GovernanceRegistry      from './pages/GovernanceRegistry'
 import TrustControl            from './pages/TrustControl'
 // System Internals
-import OSConsole               from './pages/OSConsole'
 import UserAccessManagement    from './pages/UserAccessManagement'
 
 export default function App() {
@@ -41,7 +40,6 @@ export default function App() {
           <Route path="trust-control"       element={<TrustControl />} />
 
           {/* System Internals */}
-          <Route path="os-console"          element={<OSConsole />} />
           <Route path="user-access"         element={<UserAccessManagement />} />
         </Route>
       </Routes>

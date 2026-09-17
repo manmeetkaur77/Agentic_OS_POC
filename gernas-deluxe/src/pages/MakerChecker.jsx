@@ -3,10 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import {
   Users, ShieldAlert, CheckCircle2, XCircle, Clock, Bot,
-  ArrowRight, History, AlertTriangle,
+  ArrowRight, History, AlertTriangle, X, Wrench, Activity, TrendingUp,
 } from 'lucide-react'
 import useStore from '../store/useStore'
-import { highRiskAgents, mediumRiskAgents, agentByName } from '../data/platformData'
+import { highRiskAgents, mediumRiskAgents, agentByName, toolByName, errorRatePct, riskTierOf } from '../data/platformData'
 
 /* ══════════════════════════════════════════════════════════════════════════════
    MAKER-CHECKER (HITL) — "Human-in-the-loop approval queue for high-risk or
@@ -41,11 +41,103 @@ const buildQueue = () => riskPool
     status: 'pending',
   }))
 
+/* ── Decision detail modal — full context before a human approves or rejects ── */
+function DecisionDetailModal({ item, onClose, onDecide }) {
+  const agent = agentByName(item.agent)
+  const tool  = toolByName(item.tool)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ backdropFilter: 'blur(10px)', background: 'rgba(10,18,40,0.72)' }}
+      onClick={e => e.target === e.currentTarget && onClose()}>
+      <motion.div initial={{ opacity: 0, scale: 0.93, y: 24 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.93, y: 24 }} transition={{ duration: 0.22 }}
+        className="bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+        style={{ width: '92vw', maxWidth: 560, maxHeight: '88vh', boxShadow: '0 40px 100px rgba(0,0,0,0.45)' }}>
+
+        <div className="px-6 py-5 flex items-center justify-between flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)' }}>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center flex-shrink-0">
+              <Bot size={18} className="text-white" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-white font-bold text-base leading-tight truncate">{item.agent}</p>
+              <p className="text-white/50 text-xs mt-0.5">{item.tier} &middot; Pending decision</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all flex-shrink-0">
+            <X size={15} className="text-white" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">
+          <div className="rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3.5">
+            <p className="text-xs font-bold text-amber-700 uppercase tracking-wider mb-1">Proposed Action</p>
+            <p className="text-sm text-[#1A2340] leading-relaxed">{item.action}</p>
+          </div>
+
+          {agent && (
+            <div>
+              <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider mb-1.5">What this agent does</p>
+              <p className="text-sm text-[#4A5568] leading-relaxed">{agent.description}</p>
+            </div>
+          )}
+
+          <div className="grid grid-cols-3 gap-3">
+            <div className="rounded-xl bg-[#F7F8FA] px-3 py-2.5">
+              <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><Activity size={10} /> Tasks Today</p>
+              <p className="text-sm font-bold text-[#1A2340] mt-0.5">{item.tasksToday?.toLocaleString() ?? '—'}</p>
+            </div>
+            <div className="rounded-xl bg-[#F7F8FA] px-3 py-2.5">
+              <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><TrendingUp size={10} /> Success Rate</p>
+              <p className="text-sm font-bold text-emerald-600 mt-0.5">{agent?.successRate ?? '—'}%</p>
+            </div>
+            <div className="rounded-xl bg-[#F7F8FA] px-3 py-2.5">
+              <p className="text-xs text-[#9BA8BA] flex items-center gap-1"><AlertTriangle size={10} /> Error Rate</p>
+              <p className="text-sm font-bold text-red-500 mt-0.5">{agent ? errorRatePct(agent) : '—'}%</p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#E2E8F0] px-4 py-3.5">
+            <p className="text-xs font-bold text-[#9BA8BA] uppercase tracking-wider mb-2 flex items-center gap-1.5"><Wrench size={11} /> Tool Requiring Sign-Off</p>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-[#1A2340] font-mono">{item.tool}</p>
+                <p className="text-xs text-[#718096] mt-0.5">{tool?.description || 'High-risk operation flagged for human review.'}</p>
+              </div>
+              {tool?.provider && (
+                <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-[#F1F5F9] text-[#475569] flex-shrink-0">{tool.provider}</span>
+              )}
+            </div>
+          </div>
+
+          <p className="text-xs text-[#9BA8BA] leading-relaxed">
+            Why this needs sign-off: {item.agent} is a <strong>{agent ? riskTierOf(agent) : 'high'}-risk</strong> agent ({item.tier}) whose tools include at least one financial-write or irreversible action — Trust &amp; Control's guardrails route these decisions here before they execute.
+          </p>
+        </div>
+
+        <div className="px-6 py-4 border-t border-[#E2E8F0] flex items-center justify-end gap-2 flex-shrink-0">
+          <button onClick={() => onDecide(item, 'rejected')}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-all">
+            <XCircle size={14} /> Reject
+          </button>
+          <button onClick={() => onDecide(item, 'approved')}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all">
+            <CheckCircle2 size={14} /> Approve
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  )
+}
+
 export default function MakerChecker() {
   const navigate = useNavigate()
   const { addToast } = useStore()
   const [queue, setQueue] = useState(buildQueue)
   const [history, setHistory] = useState([])
+  const [selected, setSelected] = useState(null)
 
   const decide = (item, decision) => {
     setQueue(prev => prev.filter(q => q.id !== item.id))
@@ -55,6 +147,7 @@ export default function MakerChecker() {
       title: decision === 'approved' ? 'Decision approved' : 'Decision rejected',
       message: `${item.agent}'s proposal has been ${decision}.`,
     })
+    setSelected(null)
   }
 
   const pendingCount = queue.length
@@ -64,6 +157,10 @@ export default function MakerChecker() {
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
       className="flex flex-col gap-5">
+
+      <AnimatePresence>
+        {selected && <DecisionDetailModal item={selected} onClose={() => setSelected(null)} onDecide={decide} />}
+      </AnimatePresence>
 
       {/* Header */}
       <div className="rounded-2xl px-6 py-5 flex items-center justify-between gap-4 flex-wrap"
@@ -122,7 +219,8 @@ export default function MakerChecker() {
             <div className="flex flex-col gap-3">
               {queue.map(item => (
                 <motion.div key={item.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 40 }}
-                  className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5">
+                  onClick={() => setSelected(item)}
+                  className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3.5 cursor-pointer hover:border-amber-300 hover:shadow-sm transition-all">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3 min-w-0">
                       <div className="w-9 h-9 rounded-xl bg-[#1A2340] flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -135,14 +233,15 @@ export default function MakerChecker() {
                           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-700 font-semibold">{item.tier}</span>
                         </div>
                         <p className="text-sm text-[#1A2340] mt-1 leading-snug">{item.action}</p>
+                        <p className="text-xs text-amber-700 mt-1.5 flex items-center gap-1">View details before deciding <ArrowRight size={10} /></p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      <button onClick={() => decide(item, 'approved')}
+                      <button onClick={(e) => { e.stopPropagation(); decide(item, 'approved') }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-500 hover:bg-emerald-600 transition-all">
                         <CheckCircle2 size={12} /> Approve
                       </button>
-                      <button onClick={() => decide(item, 'rejected')}
+                      <button onClick={(e) => { e.stopPropagation(); decide(item, 'rejected') }}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition-all">
                         <XCircle size={12} /> Reject
                       </button>

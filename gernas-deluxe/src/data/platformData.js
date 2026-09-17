@@ -498,3 +498,43 @@ export const GUARDRAILS = [
   { key: 'dryRun',       label: 'Dry-Run Before Prod',      appliesTo: reviewAgentCount,                              coveragePct: 100 },
   { key: 'alertOnException', label: 'Alert on Exception',  appliesTo: agentCount,                                     coveragePct: 100 },
 ]
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   INCIDENT FEED — shared by Incident Management and Live Operations, so both
+   pages show the exact same real incidents (ranked by real, catalog-derived
+   error rate) instead of each inventing its own mock list.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+export const INCIDENT_TYPES = [
+  'Elevated error rate on repeated task type',
+  'Timeout on downstream API call',
+  'Unexpected output format from tool response',
+  'Retry budget exhausted before completion',
+]
+
+const topByErrorRate = [...INDIVIDUAL_AGENTS]
+  .map(a => ({ agent: a, err: errorRatePct(a) }))
+  .sort((a, b) => b.err - a.err)
+  .slice(0, 6)
+
+export const buildIncidents = () => topByErrorRate.map(({ agent, err }, i) => ({
+  id: agent.id,
+  agent: agent.name,
+  category: agent.category,
+  errorRate: err,
+  severity: err >= 1.5 ? 'high' : err >= 0.5 ? 'medium' : 'low',
+  type: INCIDENT_TYPES[i % INCIDENT_TYPES.length],
+  status: i < 2 ? 'open' : i < 4 ? 'investigating' : 'resolved',
+  reportedAgo: `${(i + 1) * 18}m ago`,
+}))
+
+export const INCIDENT_SEVERITY_STYLE = {
+  high:   { bg: '#FEF2F2', text: '#B91C1C', badge: 'bg-red-100 text-red-700' },
+  medium: { bg: '#FFFBEB', text: '#B45309', badge: 'bg-amber-100 text-amber-700' },
+  low:    { bg: '#F0FDF4', text: '#065F46', badge: 'bg-emerald-100 text-emerald-700' },
+}
+export const INCIDENT_STATUS_STYLE = {
+  open:          { label: 'Open',          bg: 'bg-red-100 text-red-700' },
+  investigating: { label: 'Investigating', bg: 'bg-amber-100 text-amber-700' },
+  resolved:      { label: 'Resolved',      bg: 'bg-emerald-100 text-emerald-700' },
+}

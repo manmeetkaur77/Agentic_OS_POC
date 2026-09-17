@@ -1262,9 +1262,6 @@ function WorkflowPipelineView({ result, navigate, builtSteps, skippedSteps, onOp
   if (!result) return null
 
   const chain        = result.chain || []
-  const noneCount    = chain.filter(s => s.status === 'none').length
-  const partialCount = chain.filter(s => s.status === 'partial').length
-  const readyCount   = chain.filter(s => s.status === 'full').length
 
   // Complexity check: only show pipeline for 2+ steps
   if (chain.length < 2) {
@@ -1334,16 +1331,13 @@ function WorkflowPipelineView({ result, navigate, builtSteps, skippedSteps, onOp
           style={{ background: 'linear-gradient(135deg,#1A2340 0%,#2D3A5C 100%)', borderColor: '#2D3A5C' }}
         >
           <p className="text-sm font-semibold text-white leading-relaxed">{result.summary}</p>
-          <div className="flex items-center gap-3 mt-2 flex-wrap">
-            {readyCount   > 0 && <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium"><CheckCircle size={10}/> {readyCount} ready</span>}
-            {partialCount > 0 && <span className="flex items-center gap-1 text-xs text-amber-400 font-medium"><AlertCircle size={10}/> {partialCount} need work</span>}
-            {noneCount    > 0 && <span className="flex items-center gap-1 text-xs text-red-400 font-medium"><XCircle size={10}/> {noneCount} to build</span>}
-            {builtOrSkippedCount > 0 && buildNeededIndices.length > 0 && (
+          {builtOrSkippedCount > 0 && buildNeededIndices.length > 0 && (
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
               <span className="flex items-center gap-1 text-xs text-violet-400 font-medium">
                 <CheckCircle size={10}/> {builtOrSkippedCount}/{buildNeededIndices.length} configured
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -1609,17 +1603,6 @@ export default function ImagineStudio() {
         }, 1600)
         setTimeout(() => {
           setPhase(5)
-          const na = data.needsAnalysis
-          const isNew = na.type === 'report'
-          const solved   = isNew ? na.needs.filter(n => n.coverage === 'full').length    : Object.values(na.matches || {}).filter(m => m.status === 'solved').length
-          const partial  = isNew ? na.needs.filter(n => n.coverage === 'partial').length : Object.values(na.matches || {}).filter(m => m.status === 'partial').length
-          const unsolved = isNew ? na.needs.filter(n => n.coverage === 'none').length    : Object.values(na.matches || {}).filter(m => m.status === 'unsolved').length
-          const total    = solved + partial + unsolved
-          const scanMsg  = unsolved === total
-            ? `Scan complete. No existing agents cover this — **${unsolved} gap${unsolved !== 1 ? 's' : ''} identified**. See the build recommendation on the right →`
-            : `Scan complete. Found **${solved} need${solved !== 1 ? 's' : ''} fully covered**, **${partial} partial match${partial !== 1 ? 'es' : ''}**, and **${unsolved} gap${unsolved !== 1 ? 's' : ''}** to build. See the full recommendation on the right →`
-          pushMsg('nova', scanMsg)
-
           if (data.needsAnalysis.build_recommendation || data.needsAnalysis.buildSuggestion) {
             setBuildSugg(data.needsAnalysis.build_recommendation || data.needsAnalysis.buildSuggestion)
           }
@@ -2708,7 +2691,7 @@ SOURCE: Generated from Nova Discovery session in Imagination Studio`
               style={{ lineHeight: '1.5' }}
             />
             <button
-              onClick={handleSubmit}
+              onClick={() => handleSubmit()}
               disabled={!input.trim() || typing}
               className="flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-white disabled:opacity-35 transition-all hover:opacity-90 active:scale-95 mb-0.5"
               style={{ background: '#C8102E' }}

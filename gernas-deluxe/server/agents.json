@@ -645,5 +645,113 @@
     "successRate": 84.1,
     "tasksToday": 203,
     "savingsDay": 10150
+  },
+  {
+    "id": "agent-023",
+    "name": "Merchant Statement Extraction Agent",
+    "segment": "Merchant Services",
+    "segmentKey": "merchant",
+    "category": "Data",
+    "description": "Ingests native and scanned merchant pricing statements and extracts transaction volume, transaction count, fees, rates, and other pricing-related data elements into a structured record.",
+    "capabilities": [
+      "Native PDF merchant statement ingestion",
+      "Scanned PDF merchant statement ingestion with OCR",
+      "Extraction of transaction volume and transaction count",
+      "Extraction of fees, rates and pricing-related data elements",
+      "Organization of extracted data into a structured output"
+    ],
+    "tools": ["ocr-extract", "pricing-extract"],
+    "solves": [
+      "Native PDF statement ingestion",
+      "Scanned PDF statement ingestion (OCR)",
+      "Transaction volume & count extraction",
+      "Fee and rate extraction",
+      "Structured output organization"
+    ],
+    "doesNotSolve": [
+      "Pricing structure identification",
+      "Detection of missing or obscured pricing information",
+      "Confidence scoring",
+      "Savings proposal generation"
+    ],
+    "trigger": "webhook/statement-submitted",
+    "model": "claude-sonnet-4-6",
+    "status": "running",
+    "version": "1.0.0",
+    "teams": 1,
+    "deployments": 12,
+    "successRate": 96.4,
+    "tasksToday": 156,
+    "savingsDay": 6100
+  },
+  {
+    "id": "agent-024",
+    "name": "Pricing Structure Analyzer",
+    "segment": "Merchant Services",
+    "segmentKey": "merchant",
+    "category": "Data",
+    "description": "Identifies pricing structures from extracted statement data, flags missing, summarized, or potentially obscured fee information, and produces a confidence score for each analysis.",
+    "capabilities": [
+      "Pricing structure identification (interchange-plus, tiered, flat-rate, etc.)",
+      "Detection of incomplete, summarized, hidden, or unavailable fee information",
+      "Confidence scoring per analysis",
+      "Flagging of items requiring human validation"
+    ],
+    "tools": ["pricing-extract", "confidence-score"],
+    "solves": [
+      "Pricing structure identification",
+      "Missing/obscured fee detection",
+      "Confidence scoring",
+      "Flagging items for review"
+    ],
+    "doesNotSolve": [
+      "Document ingestion and OCR",
+      "Savings proposal generation",
+      "Internal revenue calculation",
+      "PDF export or email distribution"
+    ],
+    "trigger": "event/extraction-complete",
+    "model": "claude-sonnet-4-6",
+    "status": "running",
+    "version": "1.0.0",
+    "teams": 1,
+    "deployments": 9,
+    "successRate": 94.8,
+    "tasksToday": 156,
+    "savingsDay": 5400
+  },
+  {
+    "id": "agent-025",
+    "name": "Statement Review Workflow Agent",
+    "segment": "Merchant Services",
+    "segmentKey": "merchant",
+    "category": "Operations",
+    "description": "Routes flagged statement analyses to a reviewer and logs the decision. Provides basic human-in-the-loop review routing, but does not yet support confidence-based prioritization or the Account Executive approval sign-off required before results are shared externally.",
+    "capabilities": [
+      "Routing of flagged analyses to a reviewer",
+      "Audit logging of review actions",
+      "Basic review status tracking"
+    ],
+    "tools": ["notify-send", "audit-log"],
+    "solves": [
+      "Routing flagged analyses to a reviewer",
+      "Audit log of review actions",
+      "Basic review status tracking"
+    ],
+    "doesNotSolve": [
+      "Confidence-based review prioritization",
+      "Account Executive approval sign-off before external sharing",
+      "Escalation handling for low-quality or ambiguous submissions",
+      "Presentation of analysis results within the tool"
+    ],
+    "trigger": "event/analysis-flagged",
+    "model": "claude-sonnet-4-6",
+    "status": "idle",
+    "version": "0.6.0",
+    "teams": 1,
+    "deployments": 4,
+    "successRate": 78.6,
+    "tasksToday": 62,
+    "savingsDay": 1800
   }
 ]

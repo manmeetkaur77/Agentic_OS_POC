@@ -10,7 +10,7 @@ import {
   Clock, Users, BarChart2, Settings, Code,
   Wrench, Server, Cloud, Lock, Upload, AlertTriangle,
   Award, LayoutDashboard, TrendingUp, Loader,
-  Sparkles, ArrowUpRight, List, LayoutGrid as GridIcon
+  Sparkles, ArrowUpRight, List, LayoutGrid as GridIcon, EyeOff
 } from 'lucide-react'
 import useStore from '../store/useStore'
 
@@ -407,14 +407,14 @@ function UseCaseTile({ wf, isHighlighted, onClick, onDeploy, onEvaluate }) {
 }
 
 /* ── Individual Agent Card ── */
-function AgentCard({ agent, onClick, onDeploy }) {
+function AgentCard({ agent, onClick, onDeploy, onRemove }) {
   const isApproved = agent.status === 'active' || agent.status === 'approved'
   const CatIcon = AGENT_CATEGORY_ICON[agent.category] || Bot
   const kya = estimateKYA(agent)
 
   return (
     <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.15 }}
-      className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden cursor-pointer hover:border-[#CBD5E0] hover:shadow-md transition-all flex flex-col"
+      className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden cursor-pointer hover:border-[#CBD5E0] hover:shadow-md transition-all flex flex-col group/card"
       onClick={onClick}>
       <div className="p-4 flex-1 flex flex-col">
         {/* Icon + status badge */}
@@ -422,11 +422,21 @@ function AgentCard({ agent, onClick, onDeploy }) {
           <div className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0" style={{ background: '#1A2340' }}>
             <CatIcon size={19} className="text-white" />
           </div>
-          <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-            isApproved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-          }`}>
-            {isApproved ? 'PRODUCTION' : 'UNDER REVIEW'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+              isApproved ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+            }`}>
+              {isApproved ? 'PRODUCTION' : 'UNDER REVIEW'}
+            </span>
+            {onRemove && (
+              <button
+                onClick={e => { e.stopPropagation(); onRemove(agent.id) }}
+                title="Remove from view"
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[#CBD5E0] opacity-0 group-hover/card:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all">
+                <X size={12} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Name + category */}
@@ -497,13 +507,13 @@ function AgentCard({ agent, onClick, onDeploy }) {
 }
 
 /* ── Compact list row (Agents list view) ── */
-function AgentListRow({ agent, onClick, onDeploy }) {
+function AgentListRow({ agent, onClick, onDeploy, onRemove }) {
   const isApproved = agent.status === 'active' || agent.status === 'approved'
   const CatIcon = AGENT_CATEGORY_ICON[agent.category] || Bot
   const kya = estimateKYA(agent)
   return (
     <div onClick={onClick}
-      className="flex items-center gap-4 px-4 py-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#CBD5E0] hover:shadow-sm transition-all cursor-pointer">
+      className="group flex items-center gap-4 px-4 py-3 rounded-xl border border-[#E2E8F0] bg-white hover:border-[#CBD5E0] hover:shadow-sm transition-all cursor-pointer">
       <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: '#1A2340' }}>
         <CatIcon size={16} className="text-white" />
       </div>
@@ -529,6 +539,14 @@ function AgentListRow({ agent, onClick, onDeploy }) {
       >
         <ArrowUpRight size={12} /> Deploy
       </button>
+      {onRemove && (
+        <button
+          onClick={e => { e.stopPropagation(); onRemove(agent.id) }}
+          title="Remove from view"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[#CBD5E0] opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 flex-shrink-0 transition-all">
+          <X size={13} />
+        </button>
+      )}
     </div>
   )
 }
@@ -626,7 +644,7 @@ function ToolDetailModal({ tool, onClose }) {
 }
 
 /* ── Tool / MCP Card ── */
-function ToolCard({ tool, onClick }) {
+function ToolCard({ tool, onClick, onRemove }) {
   const Icon = tool.icon
   const catColors = {
     Connector:     { bg: '#EFF6FF', border: '#BFDBFE', text: '#1D4ED8' },
@@ -638,7 +656,7 @@ function ToolCard({ tool, onClick }) {
   const catStyle = catColors[tool.category] || catColors.Connector
   return (
     <motion.div whileHover={{ y: -2 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }}
-      onClick={onClick} className="rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden hover:border-[#CBD5E0] hover:shadow-md transition-all cursor-pointer">
+      onClick={onClick} className="group rounded-2xl border border-[#E2E8F0] bg-white overflow-hidden hover:border-[#CBD5E0] hover:shadow-md transition-all cursor-pointer">
       <div className="p-4">
         <div className="flex items-start justify-between gap-2 mb-3">
           <div className="flex items-center gap-2.5">
@@ -650,14 +668,24 @@ function ToolCard({ tool, onClick }) {
               <p className="text-[10px] text-[#718096]">{tool.provider} · {tool.type}</p>
             </div>
           </div>
-          {tool.status === 'connected'
-            ? <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Connected
-              </span>
-            : <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />Warning
-              </span>
-          }
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {tool.status === 'connected'
+              ? <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block" />Connected
+                </span>
+              : <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 inline-block" />Warning
+                </span>
+            }
+            {onRemove && (
+              <button
+                onClick={e => { e.stopPropagation(); onRemove(tool.id) }}
+                title="Remove from view"
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[#CBD5E0] opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 transition-all">
+                <X size={12} />
+              </button>
+            )}
+          </div>
         </div>
         <p className="text-xs text-[#718096] mb-2 line-clamp-2 leading-relaxed">{tool.description}</p>
         {tool.authors?.length > 0 && (
@@ -1045,7 +1073,7 @@ function BringFlowModal({ onClose, onSubmitted }) {
             <div>
               <p className="text-white font-bold text-base leading-tight">Bring your existing flows</p>
               <p className="text-white/50 text-xs mt-0.5">
-                {stage === 'upload'    && 'Upload a workflow spec to bring it into Discover Hub'}
+                {stage === 'upload'    && 'Upload a flow spec to bring it into Discover Hub'}
                 {stage === 'review'    && 'Confirm what we found — edit anything before scanning'}
                 {stage === 'scanning'  && 'Scanning against the live catalog…'}
                 {stage === 'done'      && 'Ready for compliance review'}
@@ -1066,7 +1094,7 @@ function BringFlowModal({ onClose, onSubmitted }) {
               <div className="w-16 h-16 rounded-2xl bg-[#F7F8FA] border-2 border-dashed border-[#CBD5E0] flex items-center justify-center mb-4">
                 <Upload size={24} className="text-[#9BA8BA]" />
               </div>
-              <p className="text-sm font-semibold text-[#1A2340]">Upload your workflow specification</p>
+              <p className="text-sm font-semibold text-[#1A2340]">Upload your flow specification</p>
               <p className="text-xs text-[#9BA8BA] mt-1.5 max-w-xs">A JSON export from your existing automation tooling — we'll fetch the name, agents and tools so you can confirm them.</p>
               <button onClick={() => fileRef.current?.click()}
                 className="mt-5 flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:opacity-90"
@@ -1086,14 +1114,14 @@ function BringFlowModal({ onClose, onSubmitted }) {
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Workflow Name</label>
+                <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Flow Name</label>
                 <input value={draft.name} onChange={e => updateDraft({ name: e.target.value })}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-sm focus:outline-none focus:border-[#C8102E]" />
               </div>
               <div>
                 <label className="text-xs font-semibold text-[#718096] mb-1.5 block">Description</label>
                 <textarea value={draft.description} onChange={e => updateDraft({ description: e.target.value })}
-                  rows={2} placeholder="What does this workflow do?"
+                  rows={2} placeholder="What does this flow do?"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E2E8F0] text-sm resize-none focus:outline-none focus:border-[#C8102E]" />
               </div>
               <div>
@@ -1171,7 +1199,7 @@ function BringFlowModal({ onClose, onSubmitted }) {
                 <AlertCircle size={26} className="text-amber-500" />
               </div>
               <p className="text-base font-bold text-[#1A2340]">"{draft.name}" is now Under Review</p>
-              <p className="text-xs text-[#718096] mt-1.5 max-w-xs">Scan complete — it's been added to Discover Hub's workflow list, flagged Under Review until compliance signs off in Approval Centre.</p>
+              <p className="text-xs text-[#718096] mt-1.5 max-w-xs">Scan complete — it's been added to Discover Hub's flow list, flagged Under Review until compliance signs off in Approval Centre.</p>
             </div>
           )}
         </div>
@@ -1338,6 +1366,11 @@ export default function AgentPool() {
   const [importedWorkflows, setImportedWorkflows] = useState([])
   const [evaluateWf, setEvaluateWf] = useState(null)
   const [flowModalOpen, setFlowModalOpen] = useState(false)
+  const [hiddenAgentIds, setHiddenAgentIds] = useState(() => new Set())
+  const [hiddenToolIds,  setHiddenToolIds]  = useState(() => new Set())
+
+  const hideAgent = (id) => setHiddenAgentIds(prev => new Set(prev).add(id))
+  const hideTool   = (id) => setHiddenToolIds(prev => new Set(prev).add(id))
 
   const TOOL_TILE_GROUPS = {
     connectors: { label: 'Connectors',  categories: ['Connector', 'Third-Party', 'Data'], color: '#10B981' },
@@ -1449,6 +1482,7 @@ export default function AgentPool() {
     return matchSearch && matchStatus
   })
   const filteredAg = allAgents.filter(a => {
+    if (hiddenAgentIds.has(a.id)) return false
     const matchSearch = !agSearch
       || a.name.toLowerCase().includes(agSearch.toLowerCase())
       || a.segment.toLowerCase().includes(agSearch.toLowerCase())
@@ -1461,6 +1495,7 @@ export default function AgentPool() {
   const activeToolGroup = TOOL_TILE_GROUPS[toolTile] || TOOL_TILE_GROUPS.connectors
   const toolCategories = ['All', ...activeToolGroup.categories]
   const filteredTools = TOOLS_MCP.filter(t => {
+    if (hiddenToolIds.has(t.id)) return false
     const mGroup = activeToolGroup.categories.includes(t.category)
     const mCat = toolCat === 'All' || t.category === toolCat
     const mSearch = !toolSearch || t.name.toLowerCase().includes(toolSearch.toLowerCase()) ||
@@ -1512,12 +1547,14 @@ export default function AgentPool() {
   }
 
   /* Discover Hub category tiles */
-  const connectorsCount = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.connectors.categories.includes(t.category)).length
-  const aiToolsCount    = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.ai.categories.includes(t.category)).length
-  const mcpCount        = TOOLS_MCP.filter(t => TOOL_TILE_GROUPS.mcp.categories.includes(t.category)).length
+  const visibleAgents   = allAgents.filter(a => !hiddenAgentIds.has(a.id))
+  const visibleTools    = TOOLS_MCP.filter(t => !hiddenToolIds.has(t.id))
+  const connectorsCount = visibleTools.filter(t => TOOL_TILE_GROUPS.connectors.categories.includes(t.category)).length
+  const aiToolsCount    = visibleTools.filter(t => TOOL_TILE_GROUPS.ai.categories.includes(t.category)).length
+  const mcpCount        = visibleTools.filter(t => TOOL_TILE_GROUPS.mcp.categories.includes(t.category)).length
 
   const TILES = [
-    { key: 'agents',     label: 'Agents',      icon: Bot,             color: '#0EA5E9', count: allAgents.length,
+    { key: 'agents',     label: 'Agents',      icon: Bot,             color: '#0EA5E9', count: visibleAgents.length,
       active: tab === 'agents',                                onClick: () => setTab('agents') },
     { key: 'workflows',  label: 'Use Cases',   icon: GitMerge,        color: '#C8102E', count: allDisplayWorkflows.length,
       active: tab === 'workflows',                             onClick: () => setTab('workflows') },
@@ -1730,8 +1767,8 @@ export default function AgentPool() {
               {/* Status filter */}
               <div className="flex items-center gap-2 pt-1 pb-2">
                 {[['all','All'],['active','Approved'],['under-review','Under Review']].map(([key, label]) => {
-                  const approvedCount = allAgents.filter(a => a.status === 'active' || a.status === 'approved').length
-                  const urCount       = allAgents.filter(a => a.status === 'under-review').length
+                  const approvedCount = visibleAgents.filter(a => a.status === 'active' || a.status === 'approved').length
+                  const urCount       = visibleAgents.filter(a => a.status === 'under-review').length
                   const count = key === 'active' ? approvedCount : key === 'under-review' ? urCount : null
                   const isActive = statusFilter === key
                   return (
@@ -1752,17 +1789,23 @@ export default function AgentPool() {
                     </button>
                   )
                 })}
+                {hiddenAgentIds.size > 0 && (
+                  <button onClick={() => setHiddenAgentIds(new Set())}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#9BA8BA] border border-dashed border-[#CBD5E0] hover:text-[#1A2340] hover:border-[#1A2340] transition-all">
+                    <EyeOff size={12} /> {hiddenAgentIds.size} hidden — Restore
+                  </button>
+                )}
               </div>
               {agentView === 'grid' ? (
                 <div className="grid grid-cols-3 gap-4">
                   {filteredAg.map(agent => (
-                    <AgentCard key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} onDeploy={handleDeployAgent} />
+                    <AgentCard key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} onDeploy={handleDeployAgent} onRemove={hideAgent} />
                   ))}
                 </div>
               ) : (
                 <div className="flex flex-col gap-2">
                   {filteredAg.map(agent => (
-                    <AgentListRow key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} onDeploy={handleDeployAgent} />
+                    <AgentListRow key={agent.id} agent={agent} onClick={() => setDetailAg(agent)} onDeploy={handleDeployAgent} onRemove={hideAgent} />
                   ))}
                 </div>
               )}
@@ -1807,8 +1850,8 @@ export default function AgentPool() {
               {/* Status filter chips */}
               <div className="flex items-center gap-2 pt-1 pb-3">
                 {[['all','All'],['connected','Approved'],['under-review','Under Review']].map(([key, label]) => {
-                  const approvedCount = TOOLS_MCP.filter(t => t.status === 'connected').length
-                  const urCount = TOOLS_MCP.filter(t => t.status === 'warning').length
+                  const approvedCount = visibleTools.filter(t => t.status === 'connected').length
+                  const urCount = visibleTools.filter(t => t.status === 'warning').length
                   const count = key === 'connected' ? approvedCount : key === 'under-review' ? urCount : null
                   const isActive = toolStatusFilter === key
                   return (
@@ -1829,10 +1872,16 @@ export default function AgentPool() {
                     </button>
                   )
                 })}
+                {hiddenToolIds.size > 0 && (
+                  <button onClick={() => setHiddenToolIds(new Set())}
+                    className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-[#9BA8BA] border border-dashed border-[#CBD5E0] hover:text-[#1A2340] hover:border-[#1A2340] transition-all">
+                    <EyeOff size={12} /> {hiddenToolIds.size} hidden — Restore
+                  </button>
+                )}
               </div>
               <div className="grid grid-cols-4 gap-3">
                 {filteredTools.map(tool => (
-                  <ToolCard key={tool.id} tool={tool} onClick={() => setDetailTool(tool)} />
+                  <ToolCard key={tool.id} tool={tool} onClick={() => setDetailTool(tool)} onRemove={hideTool} />
                 ))}
               </div>
             </motion.div>

@@ -535,7 +535,7 @@ function PhaseDocumentDesigner({ form, set, fromWorkflow, workflowStep }) {
                   const sk = SKILLS.find(s => s.id === id)
                   return (
                     <span key={id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-white" style={{ background: '#1A2340' }}>
-                      {sk?.label}
+                      {sk ? sk.label : <span className="font-mono">{id}</span>}
                       <button onClick={() => toggleSkill(id)} className="ml-0.5 hover:text-red-300">
                         <X size={10} />
                       </button>
